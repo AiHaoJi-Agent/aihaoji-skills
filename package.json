@@ -1,0 +1,42 @@
+{
+  "name": "aihaoji-openclaw",
+  "version": "0.1.0",
+  "description": "AI好记 Skill — 搜索 AI好记内容、读取 AI好记详情、按 summary/highlights/outline/polish/original/full 获取语义内容。",
+  "license": "MIT",
+  "author": "aihaoji",
+  "homepage": "https://aihaoji.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AiHaoJi/Agent-skills.git"
+  },
+  "keywords": [
+    "AI好记",
+    "aihaoji",
+    "notes",
+    "知识库",
+    "语义搜索",
+    "笔记详情",
+    "openclaw",
+    "skill"
+  ],
+  "clawhub": {
+    "acceptLicenseTerms": true
+  },
+  "openclaw": {
+    "minVersion": "0.1.0",
+    "baseUrl": "https://openapi.readlecture.cn",
+    "requires": {},
+    "optionalEnv": [
+      "AIHAOJI_API_KEY"
+    ]
+  },
+  "bin": {
+    "aihaoji-openclaw": "./scripts/install.mjs"
+  },
+  "scripts": {
+    "setup": "node ./scripts/install.mjs setup",
+    "install": "node ./scripts/install.mjs install",
+    "check": "python3 scripts/check_aihaoji.py",
+    "install:local": "python3 scripts/install_aihaoji.py"
+  }
+}
