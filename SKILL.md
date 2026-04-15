@@ -99,7 +99,7 @@ sk-s...
 如果用户还没有安装 skill，优先建议先运行：
 
 ```bash
-npx skills add AiHaoJi/Agent-skills
+npx skills add AiHaoJi-Agent/aihaoji-skills
 ```
 
 如果当前没有 API Key，不要先让用户理解 `setup` 命令，优先直接走聊天内绑定流程：

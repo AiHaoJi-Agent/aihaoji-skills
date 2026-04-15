@@ -27,7 +27,7 @@ AI好记 Skill 可以让你在聊天里直接查 AI 好记中的笔记。
 先安装 skill：
 
 ```bash
-npx skills add AiHaoJi/Agent-skills
+npx skills add AiHaoJi-Agent/aihaoji-skills
 ```
 
 安装完成后，直接开始使用就可以。
@@ -143,4 +143,3 @@ npx aihaoji-openclaw setup
 ```bash
 npx aihaoji-openclaw install
 ```
-
