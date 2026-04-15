@@ -147,6 +147,7 @@ GET /agent-open/api/v1/notes/{note_id}
 - `semantic_view`
 - `semantic_chunk_no`
 - `semantic_chunk_size`
+- `include_export_markdown`
 
 请求头：
 
@@ -167,6 +168,7 @@ Authorization: sk-sxxxxxxxxxxxxxxxx
 - `data.semantic_markdown`
 - `data.semantic_available`
 - `data.semantic_message`
+- `data.export_markdown`
 
 ## semantic_view 说明
 
@@ -188,6 +190,33 @@ Authorization: sk-sxxxxxxxxxxxxxxxx
 - 用户说“看原文” -> `original`
 - 用户说“看全部” -> `full`
 
+## include_export_markdown 说明
+
+可选值：
+
+- `true`
+- `false`
+
+建议使用：
+
+- 用户说“查看详情 / 看详情 / 打开详情 / 看这篇笔记”时，不要默认直接返回概览；应先让用户选择：
+  - 导出 Markdown 到本地
+  - 直接在聊天里查看
+- 如果用户选择“导出 Markdown 到本地”，调用详情接口时必须显式带上：
+
+```http
+GET /agent-open/api/v1/notes/{note_id}?include_export_markdown=true
+```
+
+- 如果用户同时明确指定了某个语义视图，例如 `summary / outline / highlights / polish / original / full`，则按所选视图一起传参，例如：
+
+```http
+GET /agent-open/api/v1/notes/{note_id}?semantic_view=full&include_export_markdown=true
+```
+
+- 导出本地 `.md` 时，优先直接使用 `data.export_markdown` 原样写入文件，不要自己重拼标题、不要补第二个重复标题、不要把多个视图混在同一份导出里
+- 如果当前响应没有返回 `data.export_markdown`，要明确告知用户当前接口未返回导出内容，而不是假装已经完成 Markdown 导出
+
 ## 推荐调用流程
 
 ### 场景 A：用户不知道 note_id
@@ -208,6 +237,19 @@ GET /agent-open/api/v1/notes/{note_id}?semantic_view=summary
 ### 场景 B：用户已经明确指定某篇
 
 如果上一轮已经拿到了 `note_id`，就直接调详情接口。
+
+补充交互约束：
+
+- 如果用户意图是“查看详情 / 看详情 / 打开详情 / 看这篇笔记”，不要把它直接等价成“先给 summary / outline / full 的概览”
+- 这类请求应先进入“查看方式选择”流程：
+  - A：导出 Markdown 到本地
+  - B：直接在聊天里查看
+- 只有当用户明确指定“看总结 / 看大纲 / 看精华速览 / 看润色稿 / 看原文 / 看全文”时，才直接视为对应 `semantic_view` 请求
+- 也就是说：
+  - “看这篇笔记” ≠ 默认看 `summary`
+  - “查看详情” ≠ 默认先给详情概览
+  - “打开详情” ≠ 默认展开正文
+- 当用户选择 A 时，详情接口必须显式携带 `include_export_markdown=true`
 
 ### 场景 C：用户要看笔记本树
 
