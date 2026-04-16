@@ -1,7 +1,7 @@
 {
   "name": "aihaoji-openclaw",
   "version": "0.1.0",
-  "description": "AI好记 Skill — 搜索 AI好记内容、读取 AI好记详情、按 summary/highlights/outline/polish/original/full 获取语义内容。",
+  "description": "Ai好记 Skill — 搜索 AI好记内容、读取 AI好记详情、按 summary/highlights/outline/polish/original/full 获取语义内容。",
   "license": "MIT",
   "author": "aihaoji",
   "homepage": "https://aihaoji.com",
@@ -10,7 +10,7 @@
     "url": "https://github.com/AiHaoJi-Agent/aihaoji-skills.git"
   },
   "keywords": [
-    "AI好记",
+    "Ai好记",
     "aihaoji",
     "notes",
     "知识库",

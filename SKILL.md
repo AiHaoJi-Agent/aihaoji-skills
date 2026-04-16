@@ -1,14 +1,14 @@
 ---
-name: AI好记
+name: Ai好记
 description: |
   AI好记笔记查询 skill，专门用于搜索和读取 AI好记里的笔记、笔记本和详情内容。
 
   触发这些请求时优先使用：
-  - “看 AI好记 笔记本”
+  - “看 Ai好记 笔记本”
   - “看某个笔记本里的笔记”
   - “看某个文件夹下的笔记”
   - “看某个笔记本里的笔记”
-  - “查 AI好记 笔记”
+  - “查 Ai好记 笔记”
   - “搜笔记”
   - “看笔记”
   - “最近 10 篇笔记”
@@ -25,7 +25,7 @@ description: |
 metadata: {"openclaw": {"requires": {}, "optionalEnv": ["AIHAOJI_API_KEY"], "baseUrl": "https://openapi.readlecture.cn", "homepage": "https://openapi.readlecture.cn"}}
 ---
 
-# AI好记 Agent Open Skill
+# Ai好记 Agent Open Skill
 
 ## 配置来源
 
@@ -55,7 +55,7 @@ metadata: {"openclaw": {"requires": {}, "optionalEnv": ["AIHAOJI_API_KEY"], "bas
 }
 ```
 
-`npx aihaoji-openclaw setup` 会自动写这份文件。OpenClaw、Codex、Claude 这类通过 skill 使用 AI好记 的场景，优先从这里读取，不要求用户自己设置环境变量。
+`npx aihaoji-openclaw setup` 会自动写这份文件。OpenClaw、Codex、Claude 这类通过 skill 使用 Ai好记 的场景，优先从这里读取，不要求用户自己设置环境变量。
 
 ## 鉴权规则
 
@@ -130,7 +130,7 @@ Authorization: 用户粘贴的 sk-s...
 推荐引导话术：
 
 ```text
-当前还没有配置 AI好记 API Key。
+当前还没有配置 Ai好记 API Key。
 请先前往以下地址创建开发者密钥：
 https://openapi.readlecture.cn/zh/keys
 
@@ -147,7 +147,7 @@ npx aihaoji-openclaw setup
 
 ## 强制执行规则
 
-只要用户是在“查 AI好记 笔记 / 看 AI好记 笔记 / 找 AI好记 笔记”，就必须优先调用 AI好记开放平台接口。
+只要用户是在“查 Ai好记 笔记 / 看 Ai好记 笔记 / 找 Ai好记 笔记”，就必须优先调用 AI好记开放平台接口。
 
 禁止把下面这些动作当成主查询手段：
 
@@ -174,10 +174,10 @@ npx aihaoji-openclaw setup
 
 ### 0. 触发优先级
 
-以下情况，优先调用 AI好记 skill：
+以下情况，优先调用 Ai好记 skill：
 
 1. 用户话里明确出现：
-   - `AI好记`
+   - `Ai好记`
 2. 用户表达的是查找或查看笔记类需求，例如：
    - `查笔记`
    - `搜笔记`
@@ -185,7 +185,7 @@ npx aihaoji-openclaw setup
    - `找我的笔记`
    - `打开这条笔记`
 
-如果用户没有明确指定别的知识源、别的系统或别的产品，且语义上是在“找笔记 / 看笔记”，默认理解为去 AI好记 里查。
+如果用户没有明确指定别的知识源、别的系统或别的产品，且语义上是在“找笔记 / 看笔记”，默认理解为去 Ai好记 里查。
 
 ### 1. 查列表时
 
@@ -699,7 +699,7 @@ B：直接在聊天里查看
 ```text
 列出我的笔记本
 看一下笔记本
-看 AI好记 笔记本树
+看 Ai好记 笔记本树
 ```
 
 处理规则：
@@ -718,7 +718,7 @@ B：直接在聊天里查看
 推荐回复：
 
 ```text
-我先把当前 AI好记 笔记本列表整理给你。你可以继续说“看Ai好记里的笔记”或“打开第 1 个笔记本”。
+我先把当前 Ai好记 笔记本列表整理给你。你可以继续说“看Ai好记里的笔记”或“打开第 1 个笔记本”。
 ```
 
 ### 场景 8：查看某个笔记本里的笔记
@@ -812,7 +812,7 @@ B：直接在聊天里查看
 推荐回复：
 
 ```text
-当前 AI好记 API Key 已不可用，可能是已过期、已停用、已删除，或当前 Key 没有对应接口权限。
+当前 Ai好记 API Key 已不可用，可能是已过期、已停用、已删除，或当前 Key 没有对应接口权限。
 请到 AI好记开放平台检查这把 Key 的状态、权限范围和应用绑定关系后再重试。
 ```
 
@@ -828,7 +828,7 @@ B：直接在聊天里查看
 
 | 用户意图 | 操作 |
 |---|---|
-| 查我的 AI好记 | 调 `notes` 列表 |
+| 查我的 Ai好记 | 调 `notes` 列表 |
 | 列出我的笔记本 / 文件夹 / 笔记本树 | 先调 `folders`，按层级列表展示 |
 | 看某个笔记本 / 文件夹里的笔记 | 先定位笔记本，再调 `notes?...&folder_id=...` |
 | 查最近 N 篇 / 最新 N 篇 | 调 `notes?page_no=1&page_size=N&sort_mode=create_time&sort_order=desc`，未给数量时默认 `N=10` |

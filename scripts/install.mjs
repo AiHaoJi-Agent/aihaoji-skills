@@ -47,9 +47,9 @@ async function prompt(question) {
 }
 
 async function promptApiKey() {
-  info("当前还没有配置 AI好记 API Key。");
+  info("当前还没有配置 Ai好记 API Key。");
   info(`请先前往以下地址创建开发者密钥：${KEY_CREATE_URL}`);
-  const apiKey = await prompt("请输入 AI好记 API Key（sk-s...）: ");
+  const apiKey = await prompt("请输入 Ai好记 API Key（sk-s...）: ");
   if (!apiKey) {
     fail("未输入 API Key。");
   }
@@ -165,7 +165,7 @@ async function install() {
     info("未检测到 OpenClaw，本次未写入 OpenClaw 配置。");
   }
 
-  info(`已写入 AI好记共享配置：${SHARED_CONFIG_PATH}`);
+  info(`已写入 Ai好记共享配置：${SHARED_CONFIG_PATH}`);
   info(`安装完成，当前用户是：${verifyData.user_name || verifyData.user_id || "未知用户"}`);
   info(`已绑定密钥：${verifyData.key_name || verifyData.key_id || "未知密钥"}`);
   info(`检测到宿主：OpenClaw=${hosts.openclaw ? "yes" : "no"}, Codex=${hosts.codex ? "yes" : "no"}, Claude=${hosts.claude ? "yes" : "no"}`);

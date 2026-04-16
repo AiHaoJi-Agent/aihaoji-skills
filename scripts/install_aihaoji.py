@@ -97,8 +97,8 @@ def detect_hosts() -> dict:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Install AI好记 OpenClaw skill config")
-    parser.add_argument("--api-key", help="Existing AI好记 agent open API key")
+    parser = argparse.ArgumentParser(description="Install Ai好记 OpenClaw skill config")
+    parser.add_argument("--api-key", help="Existing Ai好记 agent open API key")
     parser.add_argument("--base-url", default=os.getenv("AIHAOJI_BASE_URL", DEFAULT_BASE_URL))
     return parser.parse_args()
 
@@ -108,7 +108,7 @@ def main() -> int:
     args.base_url = normalize_base_url(args.base_url)
 
     if not args.api_key:
-        info("当前还没有配置 AI好记 API Key。")
+        info("当前还没有配置 Ai好记 API Key。")
         info(f"请先前往以下地址创建开发者密钥：{KEY_CREATE_URL}")
         return fail("Missing API key. Provide --api-key.")
 

@@ -1,7 +1,7 @@
-# AI好记 Skill
+# Ai好记 Skill
 [![License: MIT-0](https://img.shields.io/badge/License-MIT--0-blue.svg)](https://opensource.org/licenses/MIT-0)
 
-AI好记 Skill 可以让你在聊天里直接查 AI 好记中的笔记。
+Ai好记 Skill 可以让你在聊天里直接查 AI 好记中的笔记。
 
 适合这些场景：
 

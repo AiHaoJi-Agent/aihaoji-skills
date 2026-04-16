@@ -1,4 +1,4 @@
-# AI好记 Agent Open Platform 参考
+# Ai好记 Agent Open Platform 参考
 
 这个 skill 当前主要依赖四类开放平台能力：鉴权、笔记本树、笔记列表、笔记详情。
 
@@ -34,7 +34,7 @@ Authorization: sk-sxxxxxxxxxxxxxxxx
 - `data.membership_active`
 - `data.permissions`
 
-## 2. 查询 AI好记 笔记本树
+## 2. 查询 Ai好记 笔记本树
 
 接口：
 
@@ -82,7 +82,7 @@ Authorization: sk-sxxxxxxxxxxxxxxxx
 - 如果接口返回了 `children` 或 `parent_id`，必须按真实层级展示
 - 不允许声称“接口没有树状字段”或自行编造“近似树”“可见结构视图”
 
-## 3. 搜索 AI好记内容列表
+## 3. 搜索 Ai好记内容列表
 
 接口：
 
@@ -111,7 +111,7 @@ Authorization: sk-sxxxxxxxxxxxxxxxx
 
 用途：
 
-- 通过关键词找到候选 AI好记内容
+- 通过关键词找到候选 Ai好记内容
 - 用户不知道 `note_id` 时，必须先走这一步
 - 支持按创建时间查最新 / 最老笔记
 - 支持按 URL 检索对应笔记
@@ -130,7 +130,7 @@ Authorization: sk-sxxxxxxxxxxxxxxxx
 - 用“第 1 篇 / 第 2 篇”这类自然编号展示候选笔记
 - 如果是按 `folder_id` 查询结果，不允许把不在该笔记本里的笔记混进来
 
-## 4. 查询 AI好记详情
+## 4. 查询 Ai好记详情
 
 接口：
 
@@ -231,7 +231,7 @@ GET /agent-open/api/v1/notes/{note_id}?semantic_view=full&include_export_markdow
 GET /agent-open/api/v1/notes?keyword=Ai好记 后台数据
 ```
 
-2. 拿到候选结果后，根据标题、时间、摘要选出最佳 AI好记内容
+2. 拿到候选结果后，根据标题、时间、摘要选出最佳 Ai好记内容
 3. 再读取详情：
 
 ```http
@@ -381,7 +381,7 @@ GET /agent-open/api/v1/notes?page_no=1&page_size=10&keyword=https%3A%2F%2Fwww.bi
 
 - 用已有 API Key 读你的笔记
 - 完成“校验 -> 笔记本 / 搜索 -> 详情”的调用链
-- 通过共享配置让 OpenClaw、Codex、Claude 共用同一份 AI好记配置
+- 通过共享配置让 OpenClaw、Codex、Claude 共用同一份 Ai好记配置
 
 ## 详情查看规则
 
@@ -425,7 +425,7 @@ skill 侧需要明确提示用户以下可能性：
 推荐提示文案：
 
 ```text
-当前 AI好记 API Key 已不可用，可能是已过期、已停用、已删除，或没有当前接口权限。
+当前 Ai好记 API Key 已不可用，可能是已过期、已停用、已删除，或没有当前接口权限。
 请检查开放平台里的 Key 状态、权限范围和应用绑定关系。
 ```
 
