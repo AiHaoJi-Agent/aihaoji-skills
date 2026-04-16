@@ -289,20 +289,20 @@ GET /agent-open/api/v1/notes?page_no=1&page_size=10&folder_id=123
 
 强制约束：
 
-- 用户说“看一下影视飓风的笔记本”或“看一下影视飓风笔记本下的笔记”时，必须先查 `/folders`
-- 必须先定位 `影视飓风` 对应的 `folder_id`
+- 用户说“看一下Ai好记的笔记本”或“看一下Ai好记笔记本下的笔记”时，必须先查 `/folders`
+- 必须先定位 `Ai好记` 对应的 `folder_id`
 - 然后再调用 `GET /notes?...&folder_id=...`
-- 这里的 `影视飓风` 是 `folder_name`，不是 `keyword`
+- 这里的 `Ai好记` 是 `folder_name`，不是 `keyword`
 - 一旦进入这条链路，`/notes` 请求必须视为 `keyword=None`
-- 不允许把这个需求降级成 `keyword=影视飓风` 的关键词搜索
-- 不允许把用于定位笔记本的 `folder_name=影视飓风` 继续复用成 `keyword=影视飓风`
+- 不允许把这个需求降级成 `keyword=Ai好记` 的关键词搜索
+- 不允许把用于定位笔记本的 `folder_name=Ai好记` 继续复用成 `keyword=Ai好记`
 - 不允许把关键词候选列表当成“当前笔记本下的所有笔记”
 - 不允许把别的笔记本里的笔记混进当前笔记本列表
 
 ### 场景 D2：用户要在某个笔记本里搜索相关笔记
 
 ```http
-GET /agent-open/api/v1/notes?page_no=1&page_size=10&folder_id=123&keyword=影视飓风
+GET /agent-open/api/v1/notes?page_no=1&page_size=10&folder_id=123&keyword=Ai好记
 ```
 
 处理要求：
@@ -319,7 +319,7 @@ GET /agent-open/api/v1/notes?page_no=1&page_size=10&folder_id=123&keyword=影视
 强制约束：
 
 - 只有用户明确表达“在某个笔记本里找/搜/筛和某关键词相关的笔记”时，才允许同时传 `folder_id + keyword`
-- 如果用户只是说“看一下影视飓风笔记本下的笔记”，必须视为整本浏览，不能补 `keyword`
+- 如果用户只是说“看一下Ai好记笔记本下的笔记”，必须视为整本浏览，不能补 `keyword`
 - `folder_name` 只负责定位笔记本，`keyword` 只负责笔记本内搜索，二者不能因为文本相同就自动复用
 - 如果 API 返回 5 篇，就展示 5 篇；不允许自行缩成 2 篇
 - 不允许把“更相关”“更像在讲这个团队本身”“标题更明确”当作缩减返回结果的理由
