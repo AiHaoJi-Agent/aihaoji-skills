@@ -22,7 +22,7 @@ description: |
   - GET /agent-open/api/v1/notes
   - GET /agent-open/api/v1/notes/{note_id}
 
-metadata: {"openclaw": {"requires": {}, "optionalEnv": ["AIHAOJI_API_KEY"], "baseUrl": "https://openapi.readlecture.cn", "homepage": "https://openapi.readlecture.cn"}}
+metadata: {"openclaw": {"requires": {}, "optionalEnv": ["AIHAOJI_API_KEY"], "baseUrl": "https://openapi.readlecture.cn", "homepage": "https://www.aihaoji.com"}}
 ---
 
 # Ai好记 Agent Open Skill
