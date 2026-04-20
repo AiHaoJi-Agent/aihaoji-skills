@@ -20,9 +20,6 @@ function getAgentOpenApiBaseUrl(baseUrl) {
   return `${normalizeBaseUrl(baseUrl)}/agent-open/api/v1`;
 }
 
-function getAgentOpenOpenApiUrl(baseUrl) {
-  return `${normalizeBaseUrl(baseUrl)}/agent-open/openapi.json`;
-}
 
 function fail(message) {
   console.error(`[error] ${message}`);
@@ -59,13 +56,6 @@ async function promptApiKey() {
   return apiKey;
 }
 
-async function checkBackend(baseUrl) {
-  const openapiUrl = getAgentOpenOpenApiUrl(baseUrl);
-  const response = await fetch(openapiUrl);
-  if (!response.ok) {
-    fail(`后端 openapi.json 不可访问：${openapiUrl}，HTTP ${response.status}`);
-  }
-}
 
 async function checkApiKey(baseUrl, apiKey) {
   const url = `${getAgentOpenApiBaseUrl(baseUrl)}/auth/verify`;
@@ -141,8 +131,7 @@ function detectHosts() {
 
 async function install() {
   const baseUrl = normalizeBaseUrl(DEFAULT_BASE_URL);
-  info(`检查后端：${baseUrl}`);
-  await checkBackend(baseUrl);
+  info("使用 skill 仓库内静态接口文档 references/agent-open-platform.md");
 
   const apiKey = process.argv.find((item) => item.startsWith("--api-key="))
     ? process.argv.find((item) => item.startsWith("--api-key=")).split("=")[1]

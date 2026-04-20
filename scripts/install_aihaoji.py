@@ -24,10 +24,6 @@ def get_agent_open_api_base_url(base_url: str) -> str:
     return f"{normalize_base_url(base_url)}/agent-open/api/v1"
 
 
-def get_agent_open_openapi_url(base_url: str) -> str:
-    return f"{normalize_base_url(base_url)}/agent-open/openapi.json"
-
-
 def fail(message: str) -> int:
     print(f"[error] {message}")
     return 1
@@ -46,14 +42,6 @@ def load_config() -> dict:
 def save_json_config(config_path: Path, config: dict) -> None:
     config_path.parent.mkdir(parents=True, exist_ok=True)
     config_path.write_text(json.dumps(config, ensure_ascii=False, indent=2), encoding="utf-8")
-
-
-def check_backend(base_url: str) -> None:
-    openapi_url = get_agent_open_openapi_url(base_url)
-    req = Request(openapi_url)
-    with urlopen(req, timeout=10) as resp:
-        if resp.status != 200:
-            raise RuntimeError(f"Backend openapi check failed: {openapi_url}")
 
 
 def check_api_key(base_url: str, api_key: str) -> dict:
@@ -112,14 +100,7 @@ def main() -> int:
         info(f"请先前往以下地址创建开发者密钥：{KEY_CREATE_URL}")
         return fail("Missing API key. Provide --api-key.")
 
-    try:
-        check_backend(args.base_url)
-    except HTTPError as exc:
-        return fail(f"Backend returned HTTP {exc.code} during openapi check.")
-    except URLError as exc:
-        return fail(f"Cannot connect backend: {exc}")
-    except Exception as exc:
-        return fail(str(exc))
+    info("使用 skill 仓库内静态接口文档 references/agent-open-platform.md")
 
     try:
         probe = check_api_key(args.base_url, args.api_key)
