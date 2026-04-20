@@ -5,12 +5,12 @@ import os from "node:os";
 import path from "node:path";
 import readline from "node:readline";
 
-const DEFAULT_BASE_URL = process.env.AIHAOJI_BASE_URL || "https://openapi.readlecture.cn";
+const DEFAULT_BASE_URL = process.env.AIHAOJI_BASE_URL || "https://openapi.aihaoji.com";
 const OPENCLAW_CONFIG_PATH = path.join(os.homedir(), ".openclaw", "openclaw.json");
 const SHARED_CONFIG_PATH = path.join(os.homedir(), ".aihaoji", "config.json");
 const CODEX_CONFIG_PATH = path.join(os.homedir(), ".codex", "config.toml");
 const CLAUDE_CONFIG_PATH = path.join(os.homedir(), "Library", "Application Support", "Claude", "claude_desktop_config.json");
-const KEY_CREATE_URL = "https://openapi.readlecture.cn/zh/keys";
+const KEY_CREATE_URL = "https://openapi.aihaoji.com";
 
 function normalizeBaseUrl(baseUrl) {
   return (baseUrl || DEFAULT_BASE_URL).replace(/\/+$/, "");

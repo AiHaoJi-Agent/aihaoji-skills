@@ -8,7 +8,7 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 
-DEFAULT_BASE_URL = "https://openapi.readlecture.cn"
+DEFAULT_BASE_URL = "https://openapi.aihaoji.com"
 CONFIG_PATH = Path.home() / ".openclaw" / "openclaw.json"
 
 

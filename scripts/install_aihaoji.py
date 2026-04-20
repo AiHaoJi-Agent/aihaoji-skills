@@ -8,12 +8,12 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 
-DEFAULT_BASE_URL = "https://openapi.readlecture.cn"
+DEFAULT_BASE_URL = "https://openapi.aihaoji.com"
 OPENCLAW_CONFIG_PATH = Path.home() / ".openclaw" / "openclaw.json"
 SHARED_CONFIG_PATH = Path.home() / ".aihaoji" / "config.json"
 CODEX_CONFIG_PATH = Path.home() / ".codex" / "config.toml"
 CLAUDE_CONFIG_PATH = Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
-KEY_CREATE_URL = "https://openapi.readlecture.cn/zh/keys"
+KEY_CREATE_URL = "https://openapi.aihaoji.com"
 
 
 def normalize_base_url(base_url: str) -> str:

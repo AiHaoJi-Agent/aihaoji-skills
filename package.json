@@ -24,7 +24,7 @@
   },
   "openclaw": {
     "minVersion": "0.1.0",
-    "baseUrl": "https://openapi.readlecture.cn",
+    "baseUrl": "https://openapi.aihaoji.com",
     "requires": {},
     "optionalEnv": [
       "AIHAOJI_API_KEY"

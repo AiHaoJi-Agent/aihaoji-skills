@@ -22,7 +22,7 @@ description: |
   - GET /agent-open/api/v1/notes
   - GET /agent-open/api/v1/notes/{note_id}
 
-metadata: {"openclaw": {"requires": {}, "optionalEnv": ["AIHAOJI_API_KEY"], "baseUrl": "https://openapi.readlecture.cn", "homepage": "https://www.aihaoji.com"}}
+metadata: {"openclaw": {"requires": {}, "optionalEnv": ["AIHAOJI_API_KEY"], "baseUrl": "https://openapi.aihaoji.com", "homepage": "https://www.aihaoji.com"}}
 ---
 
 # Ai好记 Agent Open Skill
@@ -47,7 +47,7 @@ metadata: {"openclaw": {"requires": {}, "optionalEnv": ["AIHAOJI_API_KEY"], "bas
 {
   "provider": "aihaoji",
   "apiKey": "sk-sxxxxxxxx",
-  "baseUrl": "https://openapi.readlecture.cn",
+  "baseUrl": "https://openapi.aihaoji.com",
   "userId": "user_xxx",
   "userName": "张三",
   "keyId": "agent_open_key_xxx",
@@ -93,7 +93,7 @@ sk-s...
 
 1. `~/.aihaoji/config.json` 是否存在且包含 `apiKey`
 2. 如果共享配置不存在，再看 `$AIHAOJI_API_KEY` 是否存在
-3. `baseUrl` 默认使用 `https://openapi.readlecture.cn`
+3. `baseUrl` 默认使用 `https://openapi.aihaoji.com`
 
 如果用户还没有安装 skill，优先建议先运行：
 
@@ -106,7 +106,7 @@ npx skills add AiHaoJi-Agent/aihaoji-skills
 1. 告诉用户先去开发者密钥页面创建 API Key：
 
 ```text
-https://openapi.readlecture.cn/zh/keys
+https://openapi.aihaoji.com
 ```
 
 2. 提示用户创建完成后，直接把 `sk-s...` 粘贴回来
@@ -132,7 +132,7 @@ Authorization: 用户粘贴的 sk-s...
 ```text
 当前还没有配置 Ai好记 API Key。
 请先前往以下地址创建开发者密钥：
-https://openapi.readlecture.cn/zh/keys
+https://openapi.aihaoji.com
 
 创建完成后，把你的 API Key 粘贴给我，我会先帮你校验；校验通过后再自动完成本地配置。
 ```

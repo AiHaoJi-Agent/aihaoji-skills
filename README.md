@@ -43,7 +43,7 @@ npx skills add AiHaoJi-Agent/aihaoji-skills
 如果系统发现你还没有配置 AI 好记 API Key，会提示你去这里创建开发者密钥：
 
 ```text
-https://openapi.readlecture.cn/zh/keys
+https://openapi.aihaoji.com
 ```
 
 创建完成后，把你的 API Key 粘贴回来就行，格式类似：
@@ -92,7 +92,7 @@ API Key 校验通过，已完成配置。
 去这里创建开发者密钥：
 
 ```text
-https://openapi.readlecture.cn/zh/keys
+https://openapi.aihaoji.com
 ```
 
 然后把 `sk-s...` 粘贴回来即可。

@@ -360,7 +360,7 @@ GET /agent-open/api/v1/notes?page_no=1&page_size=10&keyword=https%3A%2F%2Fwww.bi
 {
   "provider": "aihaoji",
   "apiKey": "sk-sxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-  "baseUrl": "https://openapi.readlecture.cn",
+  "baseUrl": "https://openapi.aihaoji.com",
   "userId": "user_xxx",
   "userName": "张三",
   "keyId": "agent_open_key_xxx",
