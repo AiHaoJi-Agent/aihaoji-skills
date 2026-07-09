@@ -17,7 +17,7 @@ KEY_CREATE_URL = "https://openapi.aihaoji.com"
 
 
 def normalize_base_url(base_url: str) -> str:
-    return (base_url or DEFAULT_BASE_URL).rstrip("/")
+    return first_present(base_url, default=DEFAULT_BASE_URL).rstrip("/")
 
 
 def get_agent_open_api_base_url(base_url: str) -> str:
@@ -31,6 +31,17 @@ def fail(message: str) -> int:
 
 def info(message: str) -> None:
     print(f"[info] {message}")
+
+
+def first_present(*values, default=""):
+    for value in values:
+        if value not in (None, ""):
+            return value
+    return default
+
+
+def yes_no(value: bool) -> str:
+    return "yes" if value else "no"
 
 
 def load_config() -> dict:
@@ -69,10 +80,10 @@ def write_shared_config(api_key: str, base_url: str, verify_data: dict) -> dict:
         "provider": "aihaoji",
         "apiKey": api_key,
         "baseUrl": normalize_base_url(base_url),
-        "userId": verify_data.get("user_id") or "",
-        "userName": verify_data.get("user_name") or "",
-        "keyId": verify_data.get("key_id") or "",
-        "keyName": verify_data.get("key_name") or "",
+        "userId": first_present(verify_data.get("user_id")),
+        "userName": first_present(verify_data.get("user_name")),
+        "keyId": first_present(verify_data.get("key_id")),
+        "keyName": first_present(verify_data.get("key_name")),
     }
 
 
@@ -107,7 +118,7 @@ def main() -> int:
     except HTTPError as exc:
         try:
             payload = json.loads(exc.read().decode("utf-8"))
-            detail = payload.get("detail") or payload.get("message") or payload
+            detail = first_present(payload.get("detail"), payload.get("message"), payload)
             if isinstance(detail, dict) and detail.get("message"):
                 return fail(str(detail["message"]))
             if isinstance(detail, str):
@@ -120,7 +131,7 @@ def main() -> int:
     except Exception as exc:
         return fail(f"API key verification failed: {exc}")
 
-    data = probe.get("data") or {}
+    data = first_present(probe.get("data"), default={})
     hosts = detect_hosts()
     shared_config = write_shared_config(args.api_key, args.base_url, data)
     save_json_config(SHARED_CONFIG_PATH, shared_config)
@@ -134,9 +145,14 @@ def main() -> int:
         print("[info] OpenClaw not detected, skipped writing OpenClaw config.")
 
     print(f"[ok] wrote shared config to {SHARED_CONFIG_PATH}")
-    print(f"[ok] 当前用户是：{data.get('user_name') or data.get('user_id') or '未知用户'}")
-    print(f"[ok] 已绑定密钥：{data.get('key_name') or data.get('key_id') or '未知密钥'}")
-    print(f"[ok] 检测到宿主：OpenClaw={'yes' if hosts['openclaw'] else 'no'}, Codex={'yes' if hosts['codex'] else 'no'}, Claude={'yes' if hosts['claude'] else 'no'}")
+    print(f"[ok] 当前用户是：{first_present(data.get('user_name'), data.get('user_id'), default='未知用户')}")
+    print(f"[ok] 已绑定密钥：{first_present(data.get('key_name'), data.get('key_id'), default='未知密钥')}")
+    print(
+        "[ok] 检测到宿主："
+        f"OpenClaw={yes_no(hosts['openclaw'])}, "
+        f"Codex={yes_no(hosts['codex'])}, "
+        f"Claude={yes_no(hosts['claude'])}"
+    )
     print("[ok] auth/verify 校验结果:")
     print(json.dumps(probe, ensure_ascii=False, indent=2))
     return 0

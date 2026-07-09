@@ -9,7 +9,13 @@ const DEFAULT_BASE_URL = process.env.AIHAOJI_BASE_URL || "https://openapi.aihaoj
 const OPENCLAW_CONFIG_PATH = path.join(os.homedir(), ".openclaw", "openclaw.json");
 const SHARED_CONFIG_PATH = path.join(os.homedir(), ".aihaoji", "config.json");
 const CODEX_CONFIG_PATH = path.join(os.homedir(), ".codex", "config.toml");
-const CLAUDE_CONFIG_PATH = path.join(os.homedir(), "Library", "Application Support", "Claude", "claude_desktop_config.json");
+const CLAUDE_CONFIG_PATH = path.join(
+  os.homedir(),
+  "Library",
+  "Application Support",
+  "Claude",
+  "claude_desktop_config.json",
+);
 const KEY_CREATE_URL = "https://openapi.aihaoji.com";
 
 function normalizeBaseUrl(baseUrl) {
@@ -157,7 +163,10 @@ async function install() {
   info(`已写入 Ai好记共享配置：${SHARED_CONFIG_PATH}`);
   info(`安装完成，当前用户是：${verifyData.user_name || verifyData.user_id || "未知用户"}`);
   info(`已绑定密钥：${verifyData.key_name || verifyData.key_id || "未知密钥"}`);
-  info(`检测到宿主：OpenClaw=${hosts.openclaw ? "yes" : "no"}, Codex=${hosts.codex ? "yes" : "no"}, Claude=${hosts.claude ? "yes" : "no"}`);
+  info(
+    `检测到宿主：OpenClaw=${hosts.openclaw ? "yes" : "no"}, `
+      + `Codex=${hosts.codex ? "yes" : "no"}, Claude=${hosts.claude ? "yes" : "no"}`,
+  );
   if (hosts.codex) {
     info(`已检测到 Codex：${CODEX_CONFIG_PATH}`);
   }
