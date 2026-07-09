@@ -52,7 +52,7 @@ Agent 不能编造内部 ID，所有写接口参数都必须来自读取接口�
 | 参数 | 来源 |
 |---|---|
 | `folder_id` | 来自 `GET /agent-open/api/v1/folders` 返回的真实笔记本 ID；用于列表筛选、路径参数和输出字段，不用于单篇移动请求体 |
-| `parent_id` | 新建子笔记本时来自 `GET /agent-open/api/v1/folders` 返回的真实父级笔记本 ID；顶层笔记本传空 |
+| `parent_id` | 新建子笔记本时来自 `GET /agent-open/api/v1/folders` 返回的真实父级笔记本 ID；顶层笔记本传 `0`，不要传 `null` |
 | `target_folder_id` | 来自 `GET /agent-open/api/v1/folders` 返回的真实目标笔记本 ID；单篇/批量移动笔记和批量移动笔记本请求体使用这个字段，与 PC 端 `/api/v1/folder/batch/move` 的 `BatchMoveRequest.target_folder_id` 保持一致；移动笔记本到根目录可传 `-1` |
 | `note_id` | 来自 `GET /agent-open/api/v1/notes` 返回的真实笔记 ID，或详情接口解析出的真实 `note_id` |
 | `move_item_list` | 与 PC 端移动接口同形；笔记使用 `move_type=1`，笔记本使用 `move_type=2`，`item_id` 必须是真实 `note_id` 或 `folder_id` |
@@ -127,13 +127,15 @@ POST /agent-open/api/v1/folders
 ```json
 {
   "name": "产品研究",
-  "parent_id": 123
+  "parent_id": 0
 }
 ```
 
 说明：
 
-- `parent_id` 可为空，表示创建顶层笔记本
+- 创建顶层笔记本时传 `parent_id=0`；后端会归一为根级 `parent_id=None`
+- 创建子笔记本时，`parent_id` 必须来自 `/folders` 返回的真实父级 `folder_id`
+- 不要传 JSON `null` 创建顶层笔记本；线上接口可能返回“创建笔记本失败”
 - 创建前应先调用 `GET /agent-open/api/v1/folders` 检查同级是否已有同名笔记本
 - 返回重点：`data.folder_id`、`data.folder_name`、`data.parent_id`
 

@@ -40,7 +40,7 @@ Authorization: $AIHAOJI_API_KEY
 | 参数 | 来源 |
 |---|---|
 | `folder_id` | `GET /agent-open/api/v1/folders` 返回的真实笔记本 ID |
-| `parent_id` | 新建子笔记本时来自真实父级 `folder_id`；顶层为空 |
+| `parent_id` | 新建子笔记本时来自真实父级 `folder_id`；顶层笔记本传 `parent_id=0`，不要传 `null` |
 | `target_folder_id` | 单篇/批量移动笔记的目标笔记本 ID，也用于批量移动笔记本；必须来自真实笔记本 ID；移动笔记本到根目录可传 `-1` |
 | `note_id` | `GET /agent-open/api/v1/notes` 或详情接口返回的真实笔记 ID |
 | `move_item_list` | 与 PC 端移动接口同形：笔记 `move_type=1`，笔记本 `move_type=2`，`item_id` 为真实 ID |
@@ -87,6 +87,8 @@ Authorization: $AIHAOJI_API_KEY
 4. 等用户明确确认。
 5. 创建缺失笔记本，再移动笔记或笔记本。
 6. 重新查询目标笔记本或笔记列表验证结果。
+
+新建顶层笔记本时请求体必须使用 `"parent_id": 0`。后端会把 `0` 归一为根级 `parent_id=None`；不要传 JSON `null`，线上接口可能返回“创建笔记本失败”。
 
 自动归类整理要求：
 
