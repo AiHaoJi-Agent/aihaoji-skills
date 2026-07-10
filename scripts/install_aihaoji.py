@@ -8,16 +8,16 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 
-DEFAULT_BASE_URL = "https://openapi.readlecture.cn"
+DEFAULT_BASE_URL = "https://openapi.aihaoji.com"
 OPENCLAW_CONFIG_PATH = Path.home() / ".openclaw" / "openclaw.json"
 SHARED_CONFIG_PATH = Path.home() / ".aihaoji" / "config.json"
 CODEX_CONFIG_PATH = Path.home() / ".codex" / "config.toml"
 CLAUDE_CONFIG_PATH = Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
-KEY_CREATE_URL = "https://openapi.readlecture.cn/zh/keys"
+KEY_CREATE_URL = "https://openapi.aihaoji.com"
 
 
 def normalize_base_url(base_url: str) -> str:
-    return (base_url or DEFAULT_BASE_URL).rstrip("/")
+    return first_present(base_url, default=DEFAULT_BASE_URL).rstrip("/")
 
 
 def get_agent_open_api_base_url(base_url: str) -> str:
@@ -31,6 +31,17 @@ def fail(message: str) -> int:
 
 def info(message: str) -> None:
     print(f"[info] {message}")
+
+
+def first_present(*values, default=""):
+    for value in values:
+        if value not in (None, ""):
+            return value
+    return default
+
+
+def yes_no(value: bool) -> str:
+    return "yes" if value else "no"
 
 
 def load_config() -> dict:
@@ -69,18 +80,18 @@ def write_shared_config(api_key: str, base_url: str, verify_data: dict) -> dict:
         "provider": "aihaoji",
         "apiKey": api_key,
         "baseUrl": normalize_base_url(base_url),
-        "userId": verify_data.get("user_id") or "",
-        "userName": verify_data.get("user_name") or "",
-        "keyId": verify_data.get("key_id") or "",
-        "keyName": verify_data.get("key_name") or "",
+        "userId": first_present(verify_data.get("user_id")),
+        "userName": first_present(verify_data.get("user_name")),
+        "keyId": first_present(verify_data.get("key_id")),
+        "keyName": first_present(verify_data.get("key_name")),
     }
 
 
 def detect_hosts() -> dict:
     return {
-        "openclaw": OPENCLAW_CONFIG_PATH.parent.exists() or OPENCLAW_CONFIG_PATH.exists(),
-        "codex": CODEX_CONFIG_PATH.parent.exists() or CODEX_CONFIG_PATH.exists(),
-        "claude": CLAUDE_CONFIG_PATH.parent.exists() or CLAUDE_CONFIG_PATH.exists(),
+        "openclaw": any([OPENCLAW_CONFIG_PATH.parent.exists(), OPENCLAW_CONFIG_PATH.exists()]),
+        "codex": any([CODEX_CONFIG_PATH.parent.exists(), CODEX_CONFIG_PATH.exists()]),
+        "claude": any([CLAUDE_CONFIG_PATH.parent.exists(), CLAUDE_CONFIG_PATH.exists()]),
     }
 
 
@@ -89,6 +100,70 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--api-key", help="Existing Ai好记 agent open API key")
     parser.add_argument("--base-url", default=os.getenv("AIHAOJI_BASE_URL", DEFAULT_BASE_URL))
     return parser.parse_args()
+
+
+def verify_api_key(base_url: str, api_key: str) -> dict | None:
+    try:
+        return check_api_key(base_url, api_key)
+    except HTTPError as exc:
+        message = extract_http_error_message(exc)
+        if message:
+            fail(message)
+            return None
+        fail(f"API key verification failed with HTTP {exc.code}.")
+        return None
+    except URLError as exc:
+        fail(f"Cannot verify API key: {exc}")
+        return None
+    except Exception as exc:
+        fail(f"API key verification failed: {exc}")
+        return None
+
+
+def extract_http_error_message(exc: HTTPError) -> str:
+    try:
+        payload = json.loads(exc.read().decode("utf-8"))
+    except Exception:
+        return ""
+
+    detail = first_present(payload.get("detail"), payload.get("message"), payload)
+    if isinstance(detail, dict) and detail.get("message"):
+        return str(detail["message"])
+    if isinstance(detail, str):
+        return detail
+    return ""
+
+
+def write_detected_configs(api_key: str, base_url: str, verify_data: dict) -> dict:
+    hosts = detect_hosts()
+    shared_config = write_shared_config(api_key, base_url, verify_data)
+    save_json_config(SHARED_CONFIG_PATH, shared_config)
+
+    if hosts["openclaw"]:
+        config = load_config()
+        config = write_skill_config(config, api_key, base_url)
+        save_json_config(OPENCLAW_CONFIG_PATH, config)
+        print(f"[ok] wrote OpenClaw config to {OPENCLAW_CONFIG_PATH}")
+    else:
+        print("[info] OpenClaw not detected, skipped writing OpenClaw config.")
+
+    print(f"[ok] wrote shared config to {SHARED_CONFIG_PATH}")
+    return hosts
+
+
+def print_install_summary(hosts: dict, verify_data: dict, probe: dict) -> None:
+    user_label = first_present(verify_data.get("user_name"), verify_data.get("user_id"), default="未知用户")
+    key_label = first_present(verify_data.get("key_name"), verify_data.get("key_id"), default="未知密钥")
+    print(f"[ok] 当前用户是：{user_label}")
+    print(f"[ok] 已绑定密钥：{key_label}")
+    print(
+        "[ok] 检测到宿主："
+        f"OpenClaw={yes_no(hosts['openclaw'])}, "
+        f"Codex={yes_no(hosts['codex'])}, "
+        f"Claude={yes_no(hosts['claude'])}"
+    )
+    print("[ok] auth/verify 校验结果:")
+    print(json.dumps(probe, ensure_ascii=False, indent=2))
 
 
 def main() -> int:
@@ -101,44 +176,13 @@ def main() -> int:
         return fail("Missing API key. Provide --api-key.")
 
     info("使用 skill 仓库内静态接口文档 references/agent-open-platform.md")
+    probe = verify_api_key(args.base_url, args.api_key)
+    if probe is None:
+        return 1
 
-    try:
-        probe = check_api_key(args.base_url, args.api_key)
-    except HTTPError as exc:
-        try:
-            payload = json.loads(exc.read().decode("utf-8"))
-            detail = payload.get("detail") or payload.get("message") or payload
-            if isinstance(detail, dict) and detail.get("message"):
-                return fail(str(detail["message"]))
-            if isinstance(detail, str):
-                return fail(detail)
-        except Exception:
-            pass
-        return fail(f"API key verification failed with HTTP {exc.code}.")
-    except URLError as exc:
-        return fail(f"Cannot verify API key: {exc}")
-    except Exception as exc:
-        return fail(f"API key verification failed: {exc}")
-
-    data = probe.get("data") or {}
-    hosts = detect_hosts()
-    shared_config = write_shared_config(args.api_key, args.base_url, data)
-    save_json_config(SHARED_CONFIG_PATH, shared_config)
-
-    if hosts["openclaw"]:
-        config = load_config()
-        config = write_skill_config(config, args.api_key, args.base_url)
-        save_json_config(OPENCLAW_CONFIG_PATH, config)
-        print(f"[ok] wrote OpenClaw config to {OPENCLAW_CONFIG_PATH}")
-    else:
-        print("[info] OpenClaw not detected, skipped writing OpenClaw config.")
-
-    print(f"[ok] wrote shared config to {SHARED_CONFIG_PATH}")
-    print(f"[ok] 当前用户是：{data.get('user_name') or data.get('user_id') or '未知用户'}")
-    print(f"[ok] 已绑定密钥：{data.get('key_name') or data.get('key_id') or '未知密钥'}")
-    print(f"[ok] 检测到宿主：OpenClaw={'yes' if hosts['openclaw'] else 'no'}, Codex={'yes' if hosts['codex'] else 'no'}, Claude={'yes' if hosts['claude'] else 'no'}")
-    print("[ok] auth/verify 校验结果:")
-    print(json.dumps(probe, ensure_ascii=False, indent=2))
+    data = first_present(probe.get("data"), default={})
+    hosts = write_detected_configs(args.api_key, args.base_url, data)
+    print_install_summary(hosts, data, probe)
     return 0
 
 
