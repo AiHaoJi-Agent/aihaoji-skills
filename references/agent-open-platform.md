@@ -1,6 +1,6 @@
 # Ai好记 Agent Open Platform 参考
 
-这个 skill 当前主要依赖四类开放平台能力：鉴权、笔记本树、笔记列表、笔记详情。
+这个 skill 主要依赖开放平台的鉴权、笔记本管理、笔记列表、笔记详情、记录读取和笔记移动能力。
 
 ## 1. 校验 API Key
 
@@ -33,6 +33,34 @@ Authorization: sk-sxxxxxxxxxxxxxxxx
 - `data.key_status`
 - `data.membership_active`
 - `data.permissions`
+
+## 权限约定
+
+常用权限：
+
+- `note:list`：读取笔记列表和笔记本树
+- `note:read`：读取笔记详情、语义视图、划线、批注、我的记录
+- `folder:write`：创建、重命名、删除和移动笔记本
+- `note:move`：移动单篇或批量移动笔记
+
+写入接口返回 `401` / `403` 时，优先提示用户检查 API Key 和应用是否具备 `folder:write` 或 `note:move`。
+
+## 参数来源约定
+
+Agent 不能编造内部 ID，所有写接口参数都必须来自读取接口或用户确认：
+
+| 参数 | 来源 |
+|---|---|
+| `folder_id` | 来自 `GET /agent-open/api/v1/folders` 返回的真实笔记本 ID；用于列表筛选、路径参数和输出字段，不用于单篇移动请求体 |
+| `parent_id` | 新建子笔记本时来自 `GET /agent-open/api/v1/folders` 返回的真实父级笔记本 ID；顶层笔记本传 `0`，不要传 `null` |
+| `target_folder_id` | 来自 `GET /agent-open/api/v1/folders` 返回的真实目标笔记本 ID；单篇/批量移动笔记和批量移动笔记本请求体使用这个字段，与 PC 端 `/api/v1/folder/batch/move` 的 `BatchMoveRequest.target_folder_id` 保持一致；移动笔记本到根目录可传 `-1` |
+| `note_id` | 来自 `GET /agent-open/api/v1/notes` 返回的真实笔记 ID，或详情接口解析出的真实 `note_id` |
+| `move_item_list` | 与 PC 端移动接口同形；笔记使用 `move_type=1`，笔记本使用 `move_type=2`，`item_id` 必须是真实 `note_id` 或 `folder_id` |
+| `name` | 用户输入或 AI 整理计划中生成并经用户确认的笔记本名 |
+| `keyword` | 用户搜索词、URL、主题词或日期范围转换出的检索词 |
+| `include_records` | 用户需要划线、批注、我的记录，或 AI 自动归类需要用户标注依据时传 `true` |
+
+写入流程必须是：读取真实 ID -> 展示变更计划 -> 用户确认 -> 调用写接口 -> 再读接口验证结果。
 
 ## 2. 查询 Ai好记 笔记本树
 
@@ -81,6 +109,109 @@ Authorization: sk-sxxxxxxxxxxxxxxxx
 - 只有在用户明确要求原始 JSON / 调试信息时，才展开 `folders`
 - 如果接口返回了 `children` 或 `parent_id`，必须按真实层级展示
 - 不允许声称“接口没有树状字段”或自行编造“近似树”“可见结构视图”
+
+## 2.1 创建 Ai好记 笔记本
+
+接口：
+
+```http
+POST /agent-open/api/v1/folders
+```
+
+权限要求：
+
+- `folder:write`
+
+请求体：
+
+```json
+{
+  "name": "产品研究",
+  "parent_id": 0
+}
+```
+
+说明：
+
+- 创建顶层笔记本时传 `parent_id=0`；后端会归一为根级 `parent_id=None`
+- 创建子笔记本时，`parent_id` 必须来自 `/folders` 返回的真实父级 `folder_id`
+- 不要传 JSON `null` 创建顶层笔记本；线上接口可能返回“创建笔记本失败”
+- 创建前应先调用 `GET /agent-open/api/v1/folders` 检查同级是否已有同名笔记本
+- 返回重点：`data.folder_id`、`data.folder_name`、`data.parent_id`
+
+## 2.2 重命名 Ai好记 笔记本
+
+接口：
+
+```http
+PUT /agent-open/api/v1/folders/{folder_id}
+```
+
+权限要求：
+
+- `folder:write`
+
+请求体：
+
+```json
+{
+  "name": "增长研究"
+}
+```
+
+说明：
+
+- 重命名前必须先从笔记本树定位真实 `folder_id`
+- 默认笔记本可能被后端拒绝重命名，skill 应透传错误语义
+
+## 2.3 删除 Ai好记 笔记本
+
+接口：
+
+```http
+DELETE /agent-open/api/v1/folders/{folder_id}
+```
+
+权限要求：
+
+- `folder:write`
+
+说明：
+
+- 删除前必须单独向用户确认
+- 不允许在“AI 自动归类整理”流程里默认删除笔记本
+- 如果后端因为默认笔记本、处理中任务、权限或业务规则拒绝删除，skill 应透传错误语义
+
+## 2.4 批量移动 Ai好记 笔记本
+
+接口：
+
+```http
+POST /agent-open/api/v1/folders/batch-move
+```
+
+权限要求：
+
+- `folder:write`
+
+请求体：
+
+```json
+{
+  "target_folder_id": 123,
+  "move_item_list": [
+    {"move_type": 2, "item_id": "456", "pre_id": null}
+  ]
+}
+```
+
+说明：
+
+- 字段与 PC 端 `/api/v1/folder/batch/move` 保持同形
+- `move_type=2` 表示移动笔记本
+- `target_folder_id=-1` 表示移动到根目录
+- `pre_id` 可为空；需要指定排序位置时传同级前一个笔记本 ID
+- 移动前必须确认 `item_id` 和 `target_folder_id` 都来自 `/folders` 返回
 
 ## 3. 搜索 Ai好记内容列表
 
@@ -148,6 +279,7 @@ GET /agent-open/api/v1/notes/{note_id}
 - `semantic_chunk_no`
 - `semantic_chunk_size`
 - `include_export_markdown`
+- `include_records`
 
 请求头：
 
@@ -169,6 +301,121 @@ Authorization: sk-sxxxxxxxxxxxxxxxx
 - `data.semantic_available`
 - `data.semantic_message`
 - `data.export_markdown`
+- `data.meta.my_record`
+- `data.records_detail`
+
+## 4.1 通过详情查询划线、批注、我的记录
+
+查询方式：
+
+```http
+GET /agent-open/api/v1/notes/{note_id}?include_records=true
+```
+
+说明：记录能力统一走笔记详情接口，避免让 Agent 在“查看详情”和“读取记录”之间选择两套入口。
+
+权限要求：
+
+- `note:read`
+
+用途：
+
+- 读取用户对单篇笔记做过的划线、高亮、批注记录
+- 读取文章级“我的记录”内容
+- 给 AI 自动归类整理提供用户意图上下文
+
+返回重点：
+
+- `data.records_detail.note_id`
+- `data.records_detail.records[].record_id`
+- `data.records_detail.records[].selected_text`
+- `data.records_detail.records[].record_context[]`
+- `data.records_detail.records[].create_time`
+- `data.records_detail.my_record`
+- `data.records_detail.ai_highlights`
+- `data.records_detail.ai_highlights_status`
+
+展示约束：
+
+- 默认不要展示内部 `record_id`
+- 面向用户时按“选中文本 / 批注内容 / 所在段落 / 创建时间”整理
+- 如果记录用于归类依据，可以摘要说明“依据批注/划线判断”，但不要输出整段原始 JSON
+
+## 5. 移动单篇笔记到指定笔记本
+
+接口：
+
+```http
+PATCH /agent-open/api/v1/notes/{note_id}/folder
+```
+
+权限要求：
+
+- `note:move`
+
+请求体：
+
+```json
+{
+  "target_folder_id": 123
+}
+```
+
+说明：
+
+- 移动前必须先用 `GET /agent-open/api/v1/folders` 定位真实目标笔记本 ID，并作为 `target_folder_id` 传入
+- 移动前必须先用 `GET /agent-open/api/v1/notes` 或上下文确认真实 `note_id`
+- 返回重点：`data.note_id`、`data.folder_id`、`data.folder_name`
+
+## 5.1 批量移动笔记
+
+接口：
+
+```http
+POST /agent-open/api/v1/notes/batch-move
+```
+
+权限要求：
+
+- `note:move`
+
+请求体：
+
+```json
+{
+  "target_folder_id": 123,
+  "move_item_list": [
+    {"move_type": 1, "item_id": "task_xxx", "pre_id": null},
+    {"move_type": 1, "item_id": "task_yyy", "pre_id": null}
+  ]
+}
+```
+
+说明：
+
+- 批量移动前必须先向用户展示移动计划
+- `target_folder_id` 必须来自 `GET /agent-open/api/v1/folders` 返回的真实目标笔记本 ID
+- `move_item_list[].item_id` 必须来自接口返回的真实 `note_id`，不允许编造
+- 字段名使用 `target_folder_id` 和 `move_item_list`，不要改成 `folder_id`；这是为了和 PC 端批量移动请求保持一致
+- 兼容旧字段 `note_ids`，但新文档和新调用优先使用 `move_item_list`
+- 完成后建议调用 `GET /agent-open/api/v1/notes?folder_id=123` 验证结果
+
+## 6. AI 自动归类整理推荐流程
+
+1. `GET /agent-open/api/v1/folders` 获取已有笔记本
+2. `GET /agent-open/api/v1/notes` 获取待整理笔记
+3. `GET /agent-open/api/v1/notes/{note_id}` 读取标题、摘要、大纲、语义内容
+4. `GET /agent-open/api/v1/notes/{note_id}?include_records=true` 读取划线、批注、我的记录
+5. 生成整理计划，列出将创建的笔记本和将移动的笔记
+6. 用户确认后，用 `POST /agent-open/api/v1/folders` 创建缺失笔记本
+7. 用 `PATCH /agent-open/api/v1/notes/{note_id}/folder` 或 `POST /agent-open/api/v1/notes/batch-move` 移动笔记；单篇移动传 `target_folder_id`，批量移动传 `target_folder_id + move_item_list`
+8. 重新查询笔记本或目标笔记列表做校验
+
+安全约束：
+
+- 自动整理不得静默写入，必须先展示计划
+- 自动整理不得默认删除笔记本
+- 不确定分类的笔记应列为“待确认”，不要强行移动
 
 ## semantic_view 说明
 
@@ -375,12 +622,12 @@ GET /agent-open/api/v1/notes?page_no=1&page_size=10&keyword=https%3A%2F%2Fwww.bi
 - API Key 自动申请
 - 开放平台自动注册
 - OAuth 回调授权
-- 写入接口
 
 它只负责：
 
-- 用已有 API Key 读你的笔记
-- 完成“校验 -> 笔记本 / 搜索 -> 详情”的调用链
+- 用已有 API Key 读你的笔记和用户记录
+- 完成“校验 -> 笔记本 / 搜索 -> 详情 / 记录 / 整理写入”的调用链
+- 在用户确认后创建笔记本、移动笔记、移动笔记本和批量移动笔记
 - 通过共享配置让 OpenClaw、Codex、Claude 共用同一份 Ai好记配置
 
 ## 详情查看规则
@@ -417,7 +664,7 @@ skill 侧需要明确提示用户以下可能性：
 - API Key 已停用
 - API Key 已删除
 - 当前 API Key 对应用户不是会员用户
-- API Key 缺少 `note:list` 或 `note:read`
+- API Key 缺少 `note:list`、`note:read`、`folder:write` 或 `note:move`
 - API Key 对应应用、用户绑定或授权关系失效
 
 不允许只说“请求失败”或“接口异常”。

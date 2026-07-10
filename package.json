@@ -1,7 +1,7 @@
 {
   "name": "aihaoji-openclaw",
   "version": "0.1.0",
-  "description": "Ai好记 Skill — 搜索 AI好记内容、读取 AI好记详情、按 summary/highlights/outline/polish/original/full 获取语义内容。",
+  "description": "Ai好记 Skill — 搜索、读取、导出、整理 AI好记笔记，支持笔记本管理、笔记移动、划线批注和我的记录。",
   "license": "MIT",
   "author": "aihaoji",
   "homepage": "https://aihaoji.com",
@@ -16,6 +16,9 @@
     "知识库",
     "语义搜索",
     "笔记详情",
+    "笔记本管理",
+    "笔记整理",
+    "批注",
     "openclaw",
     "skill"
   ],
@@ -37,6 +40,8 @@
     "setup": "node ./scripts/install.mjs setup",
     "install": "node ./scripts/install.mjs install",
     "check": "python3 scripts/check_aihaoji.py",
+    "check:docs": "python3 scripts/check_skill_docs.py",
+    "test": "python3 -m pytest tests",
     "install:local": "python3 scripts/install_aihaoji.py"
   }
 }
