@@ -38,8 +38,9 @@ Authorization: sk-sxxxxxxxxxxxxxxxx
 
 常用权限：
 
-- `note:list`：读取笔记列表和笔记本树
+- `note:list`：读取笔记列表
 - `note:read`：读取笔记详情、语义视图、划线、批注、我的记录
+- `folder:list`：读取笔记本树
 - `folder:write`：创建、重命名、删除和移动笔记本
 - `note:move`：移动单篇或批量移动笔记
 
@@ -78,7 +79,7 @@ Authorization: sk-sxxxxxxxxxxxxxxxx
 
 权限要求：
 
-- `note:list`
+- `folder:list`
 
 用途：
 
@@ -664,7 +665,7 @@ skill 侧需要明确提示用户以下可能性：
 - API Key 已停用
 - API Key 已删除
 - 当前 API Key 对应用户不是会员用户
-- API Key 缺少 `note:list`、`note:read`、`folder:write` 或 `note:move`
+- API Key 缺少 `note:list`、`note:read`、`folder:list`、`folder:write` 或 `note:move`
 - API Key 对应应用、用户绑定或授权关系失效
 
 不允许只说“请求失败”或“接口异常”。

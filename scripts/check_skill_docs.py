@@ -16,8 +16,11 @@ REQUIRED_STRINGS = {
         "move_item_list",
         "ai_highlights",
         "records_detail",
+        "folder:list",
     ],
     "references/agent-open-platform.md": [
+        "`note:list`：读取笔记列表",
+        "`folder:list`：读取笔记本树",
         "folder:write",
         "note:move",
         "POST /agent-open/api/v1/notes/batch-move",
@@ -55,6 +58,7 @@ FORBIDDEN_STRINGS = {
         '"folder_id": 123\n}',
         "顶层笔记本传空",
         "`parent_id` 可为空，表示创建顶层笔记本",
+        "`note:list`：读取笔记列表和笔记本树",
     ],
 }
 
