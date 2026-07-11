@@ -63,7 +63,7 @@ Authorization: $AIHAOJI_API_KEY
 | 批量移动笔记 | `POST /agent-open/api/v1/notes/batch-move` |
 | 批量移动笔记本 | `POST /agent-open/api/v1/folders/batch-move` |
 
-写入权限通常需要 `folder:write` 或 `note:move`；记录读取需要 `note:read`。
+笔记本树读取需要 `folder:list`；写入权限通常需要 `folder:write` 或 `note:move`；记录读取需要 `note:read`。
 
 ## 意图路由
 
@@ -113,7 +113,7 @@ Authorization: $AIHAOJI_API_KEY
 ## 错误处理
 
 - `401/403`：提示 API Key 可能无效、过期、停用、删除、无权限、非会员或应用绑定失效。
-- 权限不足：指出需要 `note:list`、`note:read`、`folder:write` 或 `note:move`。
+- 权限不足：指出需要 `note:list`、`note:read`、`folder:list`、`folder:write` 或 `note:move`。
 - `404`：说明笔记或笔记本不存在，重新查询候选让用户确认。
 - `429`：说明触发频率限制，建议稍后再试或减少批量范围。
 
