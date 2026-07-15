@@ -32,13 +32,56 @@ Ai好记 Skill 可以让你在聊天里直接查、读、导出和整理 AI 好�
 
 ## 安装
 
-先安装 skill：
+### 安装 Skill
+
+#### 跨平台安装（推荐）
+
+从 GitHub 安装到用户级 Skill 目录：
 
 ```bash
-npx skills add AiHaoJi-Agent/aihaoji-skills
+npx skills add AiHaoJi-Agent/aihaoji-skills -g
 ```
 
-安装完成后，直接开始使用就可以。
+不同宿主的读取位置如下：
+
+| 宿主 | 读取位置 | 说明 |
+|---|---|---|
+| Codex | `~/.agents/skills/aihaoji` | 最新官方用户级 Skill 目录 |
+| OpenClaw | `~/.agents/skills/aihaoji` | OpenClaw 2026.7.1 中优先级高于 `~/.openclaw/skills` |
+| Claude Code | `~/.claude/skills/aihaoji` | 默认链接到全局主副本 |
+| Hermes Agent | `~/.agents/skills/aihaoji` | 通过 `skills.external_dirs` 读取 |
+
+Hermes Agent 在 `~/.hermes/config.yaml` 中加入：
+
+```yaml
+skills:
+  external_dirs:
+    - ~/.agents/skills
+```
+
+这样无需再安装到 `~/.hermes/skills`。Hermes 本地同名 Skill 的优先级高于 external dir，因此不要同时保留另一份 `~/.hermes/skills/aihaoji`。
+
+#### 升级与重装
+
+跨平台方案更新主副本：
+
+```bash
+npx skills update aihaoji -g
+```
+
+如果卸载或重装宿主后链接丢失，重新执行跨平台安装命令即可重新创建宿主链接；只要 `~/.agents/skills/aihaoji` 或 GitHub 仓库仍在，就不需要重新编写 Skill。
+
+Hermes 使用 `external_dirs` 时会直接读取更新后的主副本。
+
+### 共享 Key 配置
+
+Codex、OpenClaw、Claude Code 和 Hermes Agent 共用机器级配置：
+
+```text
+~/.aihaoji/config.json
+```
+
+这是共享配置，不要把 Key 写入任何 Skill 目录。你可以直接在聊天中提供 Key，让 AI 写入该文件；文件权限应为 `0600`。
 
 ## 第一次使用
 
@@ -59,6 +102,8 @@ https://openapi.aihaoji.com
 ```text
 sk-sxxxxxxxx
 ```
+
+也可以让 Codex、OpenClaw、Claude Code 或 Hermes Agent 把你提供的 Key 写入共享配置。Key 不会在安装完成摘要中回显；共享配置文件会使用仅当前用户可读的 `0600` 权限。
 
 系统会自动帮你：
 
@@ -147,14 +192,23 @@ https://openapi.aihaoji.com
 
 ## 备用方式
 
-如果某些情况下聊天里没有自动完成绑定，也可以手动执行：
+如果某些情况下聊天里没有自动完成绑定，npm 包发布后可以使用以下任一方式：
 
 ```bash
-npx aihaoji-openclaw setup
+npx aihaoji-skills setup
 ```
 
-兼容旧命令：
+或：
 
 ```bash
-npx aihaoji-openclaw install
+npm install -g aihaoji-skills
+aihaoji-skills setup
 ```
+
+兼容旧的 `install` 子命令：
+
+```bash
+npx aihaoji-skills install
+```
+
+当前仓库已经包含 npm CLI 和 `bin` 声明，但 `aihaoji-skills` 尚未发布到 npm registry；发布前请使用上面的 GitHub 安装命令。

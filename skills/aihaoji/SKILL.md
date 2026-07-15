@@ -1,7 +1,11 @@
 ---
 name: aihaoji
 description: Use when the user asks to search, read, export, manage, move, or auto-classify Ai好记 / AI好记 notes and notebooks, including 笔记本, 文件夹, 划线, 批注, 我的记录, 新建笔记本, 移动笔记, 移动笔记本, AI 自动归类整理。
-metadata: {"openclaw": {"requires": {}, "optionalEnv": ["AIHAOJI_API_KEY"], "baseUrl": "https://openapi.aihaoji.com", "homepage": "https://www.aihaoji.com"}}
+license: MIT-0
+metadata:
+  openclaw:
+    primaryEnv: AIHAOJI_API_KEY
+    homepage: https://openapi.aihaoji.com
 ---
 
 # Ai好记
@@ -25,13 +29,43 @@ metadata: {"openclaw": {"requires": {}, "optionalEnv": ["AIHAOJI_API_KEY"], "bas
 Authorization: $AIHAOJI_API_KEY
 ```
 
-没有 API Key 时，引导用户去 `https://openapi.aihaoji.com` 创建 `sk-s...` 开发者密钥；拿到 key 后先调 `GET /agent-open/api/v1/auth/verify` 校验，再写入 `~/.aihaoji/config.json`。自动配置失败时再提示 `npx aihaoji-openclaw setup`。
+没有 API Key 时，引导用户去 `https://openapi.aihaoji.com` 创建 `sk-s...` 开发者密钥。用户可以直接在聊天中提供 Key，也可以让 Codex/OpenClaw/Claude Code 写入共享配置；npm 包发布后也可运行 `npx aihaoji-skills setup`。拿到 key 后先调 `GET /agent-open/api/v1/auth/verify` 校验，再写入权限为 `0600` 的 `~/.aihaoji/config.json`。自动配置失败时再提示用户手动运行 setup。
+
+### 宿主安装位置
+
+跨平台安装时，以 `~/.agents/skills/aihaoji` 作为全局主副本，不为每个宿主复制独立内容：
+
+| 宿主 | 读取位置 | 说明 |
+|---|---|---|
+| Codex | `~/.agents/skills/aihaoji` | 最新官方用户级 Skill 目录 |
+| OpenClaw | `~/.agents/skills/aihaoji` | personal-agent 来源，优先级高于 `~/.openclaw/skills` |
+| Claude Code | `~/.claude/skills/aihaoji` | 链接到 `~/.agents/skills/aihaoji` |
+| Hermes Agent | `~/.agents/skills/aihaoji` | 在 `~/.hermes/config.yaml` 的 `skills.external_dirs` 中启用 |
+
+Hermes Agent 配置：
+
+```yaml
+skills:
+  external_dirs:
+    - ~/.agents/skills
+```
+
+`~/.aihaoji/config.json` 是 Codex、OpenClaw、Claude Code 和 Hermes Agent 共用的机器级 Key 配置，不属于任何宿主的 Skill 目录。用户可以在聊天中直接提供 Key，由当前 AI 写入该文件；写入后保持 `0600` 权限。Claude Desktop 与 Claude Code 的 Skill 加载机制不同，上述 Claude 路径针对 Claude Code。
+
+### npm 与 npx
+
+两种方式都支持，但用途不同：
+
+- 跨平台安装 Skill：运行 `npx skills add AiHaoJi-Agent/aihaoji-skills -g`。它把 Skill 安装到用户级目录；Codex 和 OpenClaw 读取 `~/.agents/skills/aihaoji`，Claude Code 使用 `~/.claude/skills/aihaoji`，Hermes Agent 通过 `external_dirs` 读取共享目录。
+- 配置 Key：npm 包发布后可使用 `npx aihaoji-skills setup`，或先执行 `npm install -g aihaoji-skills`，再运行 `aihaoji-skills setup`。
+
+Hermes Agent 对本仓库使用 `skills.external_dirs`。不要同时保留多个同名副本，以免宿主加载到旧版本。`aihaoji-skills` 尚未发布到 npm registry，发布前不要把 npm/npx 配置 CLI 当作已可直接下载的入口。
 
 ## 强制规则
 
 - 用户要查、看、找、整理 Ai好记 笔记时，必须调用开放平台接口；不要扫描本地目录、日志、缓存或源码来猜笔记内容。
 - 所有内部 ID 必须来自接口返回，不能手写：`folder_id`、`target_folder_id`、`note_id`、`move_item_list[].item_id` 都必须先查询确认。
-- 普通展示默认隐藏 `note_id` 和 `folder_id`；只有用户要求调试或原始字段时再展示。
+- 普通展示默认隐藏 `note_id`、`folder_id`、`user_id` 和 `key_id`；只有用户要求调试或原始字段时再展示。
 - 接口报错、超时、`401/403/429/5xx` 时，明确说明当前无法通过 Ai好记开放平台获取数据，不要退回本地搜索。
 - 写入前必须展示变更计划并等待用户确认；删除笔记本必须单独确认，不能包含在自动整理默认计划里。
 

@@ -629,7 +629,7 @@ GET /agent-open/api/v1/notes?page_no=1&page_size=10&keyword=https%3A%2F%2Fwww.bi
 - 用已有 API Key 读你的笔记和用户记录
 - 完成“校验 -> 笔记本 / 搜索 -> 详情 / 记录 / 整理写入”的调用链
 - 在用户确认后创建笔记本、移动笔记、移动笔记本和批量移动笔记
-- 通过共享配置让 OpenClaw、Codex、Claude 共用同一份 Ai好记配置
+- 通过共享配置让 OpenClaw、Codex、Claude Code、Hermes Agent 共用同一份 Ai好记配置
 
 ## 详情查看规则
 
