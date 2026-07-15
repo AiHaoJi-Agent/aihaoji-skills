@@ -10,6 +10,7 @@ from urllib.request import Request, urlopen
 
 DEFAULT_BASE_URL = "https://openapi.aihaoji.com"
 CONFIG_PATH = Path.home() / ".openclaw" / "openclaw.json"
+SHARED_CONFIG_PATH = Path.home() / ".aihaoji" / "config.json"
 
 
 def normalize_base_url(base_url: str) -> str:
@@ -29,6 +30,13 @@ def load_config() -> dict:
     if not CONFIG_PATH.exists():
         raise FileNotFoundError(f"Config file not found: {CONFIG_PATH}")
     return json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+
+
+def load_optional_json(config_path: Path) -> dict:
+    if not config_path.exists():
+        return {}
+    value = json.loads(config_path.read_text(encoding="utf-8"))
+    return value if isinstance(value, dict) else {}
 
 
 def get_skill_entry(config: dict) -> dict:
@@ -56,16 +64,41 @@ def http_json(url: str, api_key: str) -> dict:
 
 def load_skill_config() -> tuple[str, str]:
     try:
-        config = load_config()
-        entry = get_skill_entry(config)
+        shared_config = load_optional_json(SHARED_CONFIG_PATH)
     except Exception as exc:
         raise RuntimeError(str(exc)) from exc
 
-    api_key = resolve_api_key(entry)
-    if not api_key:
-        raise RuntimeError("Missing apiKey in OpenClaw config.")
+    shared_api_key = shared_config.get("apiKey")
+    if shared_api_key:
+        base_url = first_present(
+            shared_config.get("baseUrl"),
+            os.getenv("AIHAOJI_BASE_URL"),
+            DEFAULT_BASE_URL,
+        )
+        return shared_api_key, normalize_base_url(base_url)
 
-    return api_key, resolve_base_url(entry)
+    try:
+        openclaw_config = load_optional_json(CONFIG_PATH)
+        entry = nested_dict(openclaw_config, "skills", "entries").get("aihaoji", {})
+        if not isinstance(entry, dict):
+            entry = {}
+    except Exception as exc:
+        raise RuntimeError(str(exc)) from exc
+
+    api_key = first_present(
+        entry.get("apiKey"),
+        os.getenv("AIHAOJI_API_KEY"),
+    )
+    if not api_key:
+        raise RuntimeError("Missing Ai好记 API Key in shared config, OpenClaw config, or environment.")
+
+    env = entry.get("env", {}) if isinstance(entry.get("env"), dict) else {}
+    base_url = first_present(
+        env.get("AIHAOJI_BASE_URL"),
+        os.getenv("AIHAOJI_BASE_URL"),
+        DEFAULT_BASE_URL,
+    )
+    return api_key, normalize_base_url(base_url)
 
 
 def resolve_api_key(entry: dict) -> str:
@@ -103,6 +136,21 @@ def fetch_notes_probe(api_key: str, base_url: str) -> dict:
         raise RuntimeError(f"Unexpected error: {exc}") from exc
 
 
+def summarize_notes_probe(result: dict) -> dict:
+    data = result.get("data", {}) if isinstance(result, dict) else {}
+    notes = data.get("notes", []) if isinstance(data, dict) else []
+    return {
+        "code": result.get("code"),
+        "message": result.get("message"),
+        "data": {
+            "total": data.get("total"),
+            "page_no": data.get("page_no"),
+            "page_size": data.get("page_size"),
+            "note_count": len(notes) if isinstance(notes, list) else 0,
+        },
+    }
+
+
 def main() -> int:
     try:
         api_key, base_url = load_skill_config()
@@ -115,7 +163,7 @@ def main() -> int:
         return fail(str(exc))
 
     print("[ok] notes endpoint reachable")
-    print(json.dumps(result, ensure_ascii=False, indent=2))
+    print(json.dumps(summarize_notes_probe(result), ensure_ascii=False, indent=2))
     return 0
 
 

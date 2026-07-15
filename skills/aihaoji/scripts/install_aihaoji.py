@@ -12,7 +12,11 @@ DEFAULT_BASE_URL = "https://openapi.aihaoji.com"
 OPENCLAW_CONFIG_PATH = Path.home() / ".openclaw" / "openclaw.json"
 SHARED_CONFIG_PATH = Path.home() / ".aihaoji" / "config.json"
 CODEX_CONFIG_PATH = Path.home() / ".codex" / "config.toml"
+CODEX_SKILLS_PATH = Path.home() / ".agents" / "skills"
 CLAUDE_CONFIG_PATH = Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
+CLAUDE_CODE_SKILLS_PATH = Path.home() / ".claude" / "skills"
+HERMES_SKILLS_PATH = Path.home() / ".hermes" / "skills"
+HERMES_CONFIG_PATH = Path.home() / ".hermes" / "config.yaml"
 KEY_CREATE_URL = "https://openapi.aihaoji.com"
 
 
@@ -52,7 +56,11 @@ def load_config() -> dict:
 
 def save_json_config(config_path: Path, config: dict) -> None:
     config_path.parent.mkdir(parents=True, exist_ok=True)
-    config_path.write_text(json.dumps(config, ensure_ascii=False, indent=2), encoding="utf-8")
+    payload = json.dumps(config, ensure_ascii=False, indent=2)
+    descriptor = os.open(config_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(descriptor, "w", encoding="utf-8") as config_file:
+        config_file.write(payload)
+    os.chmod(config_path, 0o600)
 
 
 def check_api_key(base_url: str, api_key: str) -> dict:
@@ -90,8 +98,9 @@ def write_shared_config(api_key: str, base_url: str, verify_data: dict) -> dict:
 def detect_hosts() -> dict:
     return {
         "openclaw": any([OPENCLAW_CONFIG_PATH.parent.exists(), OPENCLAW_CONFIG_PATH.exists()]),
-        "codex": any([CODEX_CONFIG_PATH.parent.exists(), CODEX_CONFIG_PATH.exists()]),
-        "claude": any([CLAUDE_CONFIG_PATH.parent.exists(), CLAUDE_CONFIG_PATH.exists()]),
+        "codex": any([CODEX_SKILLS_PATH.exists(), CODEX_CONFIG_PATH.parent.exists(), CODEX_CONFIG_PATH.exists()]),
+        "claude": CLAUDE_CODE_SKILLS_PATH.exists(),
+        "hermes": any([HERMES_SKILLS_PATH.exists(), HERMES_CONFIG_PATH.exists()]),
     }
 
 
@@ -104,7 +113,17 @@ def parse_args() -> argparse.Namespace:
 
 def verify_api_key(base_url: str, api_key: str) -> dict | None:
     try:
-        return check_api_key(base_url, api_key)
+        probe = check_api_key(base_url, api_key)
+        data = probe.get("data", {}) if isinstance(probe, dict) else {}
+        if not (
+            probe.get("code") == 0
+            and data.get("valid") is True
+            and data.get("membership_active") is True
+            and data.get("key_status") == "active"
+        ):
+            fail(first_present(probe.get("message"), default="API Key 校验失败。"))
+            return None
+        return probe
     except HTTPError as exc:
         message = extract_http_error_message(exc)
         if message:
@@ -151,19 +170,30 @@ def write_detected_configs(api_key: str, base_url: str, verify_data: dict) -> di
     return hosts
 
 
+def summarize_verify_result(probe: dict) -> dict:
+    data = probe.get("data", {}) if isinstance(probe, dict) else {}
+    allowed_fields = ("valid", "membership_active", "key_status", "permissions")
+    return {
+        "code": probe.get("code"),
+        "message": probe.get("message"),
+        "data": {key: data.get(key) for key in allowed_fields if key in data},
+    }
+
+
 def print_install_summary(hosts: dict, verify_data: dict, probe: dict) -> None:
-    user_label = first_present(verify_data.get("user_name"), verify_data.get("user_id"), default="未知用户")
-    key_label = first_present(verify_data.get("key_name"), verify_data.get("key_id"), default="未知密钥")
+    user_label = first_present(verify_data.get("user_name"), default="已验证用户")
+    key_label = first_present(verify_data.get("key_name"), default="已验证密钥")
     print(f"[ok] 当前用户是：{user_label}")
     print(f"[ok] 已绑定密钥：{key_label}")
     print(
         "[ok] 检测到宿主："
         f"OpenClaw={yes_no(hosts['openclaw'])}, "
         f"Codex={yes_no(hosts['codex'])}, "
-        f"Claude={yes_no(hosts['claude'])}"
+        f"Claude={yes_no(hosts['claude'])}, "
+        f"Hermes={yes_no(hosts['hermes'])}"
     )
     print("[ok] auth/verify 校验结果:")
-    print(json.dumps(probe, ensure_ascii=False, indent=2))
+    print(json.dumps(summarize_verify_result(probe), ensure_ascii=False, indent=2))
 
 
 def main() -> int:
