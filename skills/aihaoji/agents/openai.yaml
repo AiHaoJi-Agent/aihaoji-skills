@@ -1,7 +1,7 @@
 interface:
   display_name: "Ai好记"
-  short_description: "搜索、阅读、导出和整理 Ai好记笔记"
-  default_prompt: "使用 $aihaoji 查询或整理我的 Ai好记笔记。"
+  short_description: "查找、阅读、导出和整理 Ai好记笔记，并管理笔记本、划线与批注"
+  default_prompt: "使用 $aihaoji 按关键词、标题或原链接查找并阅读我的 Ai好记笔记，查看总结、原文、划线和批注，并在我确认后整理笔记本。"
 
 policy:
   allow_implicit_invocation: true

@@ -1,10 +1,10 @@
 {
   "name": "aihaoji-skills",
-  "version": "0.1.0",
-  "description": "Ai好记 Skill — 搜索、读取、导出、整理 AI好记笔记，支持笔记本管理、笔记移动、划线批注和我的记录。",
+  "version": "1.0.0",
+  "description": "Ai好记 Skill — 搜索、读取、导出、整理 AI好记笔记，支持笔记本管理、笔记移动、查看划线批注和我的记录。",
   "license": "MIT-0",
   "author": "aihaoji",
-  "homepage": "https://aihaoji.com",
+  "homepage": "https://aihaoji.com/zh/skill",
   "repository": {
     "type": "git",
     "url": "https://github.com/AiHaoJi-Agent/aihaoji-skills.git"
@@ -29,7 +29,11 @@
     "笔记本管理",
     "笔记整理",
     "批注",
+    "agent-skills",
+    "codex",
     "openclaw",
+    "claude-code",
+    "hermes-agent",
     "skill"
   ],
   "engines": {
@@ -42,6 +46,7 @@
     "setup": "node ./skills/aihaoji/scripts/install.mjs setup",
     "check": "python3 skills/aihaoji/scripts/check_aihaoji.py",
     "test": "python3 -m pytest tests && node --test tests/*.test.mjs",
-    "install:local": "python3 skills/aihaoji/scripts/install_aihaoji.py"
+    "install:local": "python3 skills/aihaoji/scripts/install_aihaoji.py",
+    "validate:skill": "node scripts/validate_skill.mjs"
   }
 }

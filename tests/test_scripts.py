@@ -316,6 +316,7 @@ def test_skill_uses_official_openclaw_primary_env_metadata():
 def test_npm_package_uses_runtime_files_allowlist():
     package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
 
+    assert package["version"] == "1.0.0"
     assert package["files"] == [
         "README.md",
         "LICENSE",
@@ -358,37 +359,40 @@ def test_npm_package_avoids_host_specific_skill_metadata_and_install_lifecycle()
     assert package["engines"]["node"] == ">=18"
 
 
-def test_skill_documents_host_install_locations_and_shared_config():
+def test_npm_package_keywords_cover_supported_agent_platforms():
+    package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
+
+    for keyword in ("agent-skills", "codex", "openclaw", "claude-code", "hermes-agent"):
+        assert keyword in package["keywords"]
+
+
+def test_skill_documents_host_install_locations_and_readme_stays_host_agnostic():
     skill = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
     for path in ("~/.agents/skills", "~/.claude/skills", "~/.aihaoji/config.json"):
         assert path in skill
-        assert path in readme
 
     assert "~/.codex/skills" not in skill
-    assert "~/.codex/skills" not in readme
-    assert "~/.agents/skills" in readme
-    assert "优先级高于 `~/.openclaw/skills`" in readme
+    assert "~/.aihaoji/config.json" not in readme
+    assert "Codex、OpenClaw、Claude Code、Hermes Agent 等兼容 Agent Skills 的平台" in readme
     assert "npx skills add AiHaoJi-Agent/aihaoji-skills -g" in readme
     assert "-a codex" not in readme
     assert "-a claude-code" not in readme
     assert " -y" not in readme
     assert "Vercel Labs" not in readme
     assert "-a openclaw" not in readme
-    assert "npx skills add" in readme
-    assert "npm install -g aihaoji-skills" in readme
 
 
 def test_skill_documents_hermes_shared_directory_support():
     skill = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
-    for content in (skill, readme):
-        assert "Hermes Agent" in content
-        assert "~/.hermes/config.yaml" in content
-        assert "external_dirs" in content
-        assert "~/.agents/skills" in content
+    assert "Hermes Agent" in readme
+    assert "Hermes Agent" in skill
+    assert "~/.hermes/config.yaml" in skill
+    assert "external_dirs" in skill
+    assert "~/.agents/skills" in skill
 
     assert "hermes skills install https://github.com" not in skill
     assert "hermes skills install https://github.com" not in readme
@@ -408,23 +412,62 @@ def test_license_and_codex_ui_metadata_match_distribution_targets():
 
     assert license_text.startswith("MIT No Attribution")
     assert "display_name: \"Ai好记\"" in openai_metadata
-    assert "short_description:" in openai_metadata
-    assert "default_prompt:" in openai_metadata
+    assert (
+        'short_description: "查找、阅读、导出和整理 Ai好记笔记，并管理笔记本、划线与批注"'
+        in openai_metadata
+    )
+    assert (
+        'default_prompt: "使用 $aihaoji 按关键词、标题或原链接查找并阅读我的 Ai好记笔记，'
+        '查看总结、原文、划线和批注，并在我确认后整理笔记本。"'
+        in openai_metadata
+    )
+    assert "allow_implicit_invocation: true" in openai_metadata
 
 
-def test_readme_distinguishes_skill_install_from_key_setup():
+def test_readme_documents_available_install_and_shared_key_setup():
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+    assert "https://skills.sh/b/AiHaoJi-Agent/aihaoji-skills" in readme
+    assert "安装 Skill，让不同 Agent 平台都可以使用：" in readme
+    assert "npx skills add AiHaoJi-Agent/aihaoji-skills -g" in readme
+    assert "安装到检测到的兼容 Agent" in readme
+    assert "https://openapi.aihaoji.com" in readme
+    assert "首次使用时" in readme
+    assert "创建开发者密钥" in readme
+    assert "在你授权后完成校验并保存到当前电脑" in readme
+    assert "无需在不同 Agent 中重复配置" in readme
+    assert "请妥善保管 API Key，不要公开分享" in readme
+    assert "提交到 Git" not in readme
+    assert "Skill 目录" not in readme
+    assert "npx aihaoji-skills setup" not in readme
+    assert "npm install -g aihaoji-skills" not in readme
+    assert "npx aihaoji-skills install" not in readme
+
+
+def test_readme_distinguishes_product_input_from_current_skill_capabilities():
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+    assert "查找、阅读、导出和整理笔记" in readme
+    assert "当前 Skill 不负责" not in readme
+
+
+def test_readme_presents_user_scenarios_before_installation():
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+    section_positions = [
+        readme.index("## 适用场景"),
+        readme.index("## 核心能力"),
+        readme.index("## 安装"),
+        readme.index("## 配置 API Key"),
+    ]
+    assert section_positions == sorted(section_positions)
+
+
+def test_readme_keeps_installation_focused_on_the_available_entrypoint():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
     assert "npx skills add AiHaoJi-Agent/aihaoji-skills -g" in readme
-    assert "npx aihaoji-skills setup" in readme
-    assert "npm install -g aihaoji-skills" in readme
-
-
-def test_readme_documents_cross_host_update_and_reinstall_flow():
-    readme = (ROOT / "README.md").read_text(encoding="utf-8")
-
-    assert "npx skills update aihaoji -g" in readme
-    assert "重新创建宿主链接" in readme
+    assert "npx skills update" not in readme
     assert "openclaw skills install" not in readme
 
 
@@ -450,3 +493,118 @@ def test_skill_docs_keep_the_url_search_contract():
     assert "按 URL 找笔记" in skill
     assert "支持按 URL 检索对应笔记" in reference
     assert "keyword=<完整 URL>" in reference
+
+
+def test_agent_open_platform_reference_has_major_section_navigation():
+    reference = (SKILL_ROOT / "references" / "agent-open-platform.md").read_text(encoding="utf-8")
+
+    assert "## 目录" in reference
+    for anchor in (
+        "#1-校验-api-key",
+        "#2-查询-ai好记-笔记本树",
+        "#3-搜索-ai好记内容列表",
+        "#4-查询-ai好记详情",
+        "#5-移动单篇笔记到指定笔记本",
+        "#6-ai-自动归类整理推荐流程",
+        "#鉴权异常处理约定",
+    ):
+        assert anchor in reference
+
+
+def test_skill_uses_stable_cli_availability_guidance():
+    skill = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+
+    for stale_status in ("npm 包发布后", "尚未发布", "发布前不要"):
+        assert stale_status not in skill
+    assert "本机已安装 `aihaoji-skills` CLI 时" in skill
+    assert "`aihaoji-skills setup`" in skill
+
+
+def test_skill_defines_unbranded_trigger_and_explicit_carrier_exclusions():
+    skill = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+    frontmatter = skill.split("---", 2)[1]
+
+    for phrase in (
+        "Use when",
+        "personal notes",
+        "personal notebooks",
+        "最近的笔记",
+        "列出我的笔记本",
+        "not agent memory",
+        "not Claude memory",
+        "总结",
+        "划线",
+        "批注",
+    ):
+        assert phrase in frontmatter
+
+    for phrase in (
+        "本地文件",
+        "代码仓库",
+        "Obsidian",
+        "Notion",
+        "有道云笔记",
+        "其他服务",
+    ):
+        assert phrase in frontmatter
+
+    assert "## 触发边界" in skill
+    assert "默认触发 Ai好记" in skill
+    assert "只出现 `notes`、`folder`" in skill
+    assert "导出个人笔记为 Markdown 仍属于本 Skill" in skill
+    assert "本地 Markdown 文件则不属于本 Skill" in skill
+
+
+def test_skill_trigger_expansion_preserves_write_confirmation():
+    skill = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+
+    assert "路由到本 Skill 不等于授权写入" in skill
+    assert "确认前不得调用写接口" in skill
+    assert "写入前必须展示变更计划并等待用户确认" in skill
+    assert "删除笔记本必须单独确认" in skill
+
+
+def test_public_agent_compatibility_matrix_covers_supported_workflows():
+    matrix_path = ROOT / "docs" / "agent-platform-compatibility.md"
+    matrix = matrix_path.read_text(encoding="utf-8")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+
+    for platform in ("Codex", "OpenClaw", "Claude Code", "Hermes Agent"):
+        assert platform in matrix
+    for scenario in ("正常触发", "避免误触发", "只读真实工作流", "写操作确认"):
+        assert scenario in matrix
+    for scenario_id in (
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "N1",
+        "N2",
+        "N3",
+        "R1",
+        "R2",
+        "W1",
+        "W2",
+        "W3",
+        "W4",
+        "E1",
+        "E2",
+    ):
+        assert f"| {scenario_id} |" in matrix
+    assert "## 路由与误触发矩阵" in matrix
+    assert "## 安全与真实工作流矩阵" in matrix
+    assert "未验证" in matrix
+    assert "| Codex | 0.144.5 |" in matrix
+    assert "| OpenClaw | 2026.7.1 |" in matrix
+    assert "| Claude Code | 2.1.204" in matrix
+    assert "| Hermes Agent | 0.18.0" in matrix
+    assert "无品牌触发规则变更后待使用隔离新会话复测" in matrix
+    assert "分开记录 Skill 扫描、description 预算、Skill 调用和最终路由" in matrix
+    assert "W1-W4 只验证确认边界" in matrix
+    assert "Plugin Eval" in matrix
+    assert "SkillOpt" in matrix
+    assert "可选辅助" in matrix
+    assert "docs/agent-platform-compatibility.md" not in readme
+    assert "docs/agent-platform-compatibility.md" in agents

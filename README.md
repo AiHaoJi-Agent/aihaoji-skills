@@ -1,214 +1,54 @@
 # Ai好记 Skill
+
 [![License: MIT-0](https://img.shields.io/badge/License-MIT--0-blue.svg)](https://opensource.org/licenses/MIT-0)
+[![skills.sh](https://skills.sh/b/AiHaoJi-Agent/aihaoji-skills)](https://skills.sh/AiHaoJi-Agent/aihaoji-skills)
 
-Ai好记 Skill 可以让你在聊天里直接查、读、导出和整理 AI 好记中的笔记。
+Ai好记 Skill 让 Codex、OpenClaw、Claude Code、Hermes Agent 等兼容 Agent Skills 的平台连接你的 Ai好记知识库，在聊天中查找、阅读、导出和整理笔记，并管理笔记本。
 
-适合这些场景：
-
-- 看最近的笔记
-- 找某个主题相关的笔记
-- 打开某一篇笔记
-- 查看某篇笔记的总结、大纲、精华速览、润色稿、原文
-- 查看笔记里的划线、高亮、批注和我的记录
-- 新建、重命名、删除和移动笔记本
-- 把笔记移动到指定笔记本
-- 让 AI 读取笔记后自动归类整理
-
-
-## 核心能力
-
-| 能力 | 说明 |
-|------|------|
-| **📝 查最近笔记** | 直接说“帮我看最近的笔记”，就能按时间顺序查看最近内容 |
-| **🔍 搜相关内容** | 支持按主题、标题、总结内容搜索相关笔记，例如“帮我找Ai好记相关的内容” |
-| **🔗 按链接找笔记** | 支持按 URL 查找对应笔记，适合根据 B 站、抖音等内容链接快速定位 |
-| **📄 查看笔记详情** | 找到目标笔记后，可以继续打开详情，看标题、来源、状态和可查看内容 |
-| **📚 查看不同内容版本** | 支持查看总结、大纲、精华速览、润色稿、原文和完整内容 |
-| **🗂️ 管理笔记本** | 支持新建、重命名、删除和移动笔记本，并在写入前确认操作计划 |
-| **↪️ 移动整理笔记** | 支持把单篇或多篇笔记移动到指定笔记本 |
-| **✍️ 读取用户记录** | 支持读取划线、高亮、批注和我的记录，作为整理归类依据 |
-| **🧭 自动归类整理** | 支持先读取笔记和记录，再生成归类计划，确认后创建笔记本并移动笔记 |
-
-
-## 安装
-
-### 安装 Skill
-
-#### 跨平台安装（推荐）
-
-从 GitHub 安装到用户级 Skill 目录：
-
-```bash
-npx skills add AiHaoJi-Agent/aihaoji-skills -g
-```
-
-不同宿主的读取位置如下：
-
-| 宿主 | 读取位置 | 说明 |
-|---|---|---|
-| Codex | `~/.agents/skills/aihaoji` | 最新官方用户级 Skill 目录 |
-| OpenClaw | `~/.agents/skills/aihaoji` | OpenClaw 2026.7.1 中优先级高于 `~/.openclaw/skills` |
-| Claude Code | `~/.claude/skills/aihaoji` | 默认链接到全局主副本 |
-| Hermes Agent | `~/.agents/skills/aihaoji` | 通过 `skills.external_dirs` 读取 |
-
-Hermes Agent 在 `~/.hermes/config.yaml` 中加入：
-
-```yaml
-skills:
-  external_dirs:
-    - ~/.agents/skills
-```
-
-这样无需再安装到 `~/.hermes/skills`。Hermes 本地同名 Skill 的优先级高于 external dir，因此不要同时保留另一份 `~/.hermes/skills/aihaoji`。
-
-#### 升级与重装
-
-跨平台方案更新主副本：
-
-```bash
-npx skills update aihaoji -g
-```
-
-如果卸载或重装宿主后链接丢失，重新执行跨平台安装命令即可重新创建宿主链接；只要 `~/.agents/skills/aihaoji` 或 GitHub 仓库仍在，就不需要重新编写 Skill。
-
-Hermes 使用 `external_dirs` 时会直接读取更新后的主副本。
-
-### 共享 Key 配置
-
-Codex、OpenClaw、Claude Code 和 Hermes Agent 共用机器级配置：
-
-```text
-~/.aihaoji/config.json
-```
-
-这是共享配置，不要把 Key 写入任何 Skill 目录。你可以直接在聊天中提供 Key，让 AI 写入该文件；文件权限应为 `0600`。
-
-## 第一次使用
-
-第一次使用时，你可以直接说：
-
-```text
-帮我看最近的笔记
-```
-
-如果系统发现你还没有配置 AI 好记 API Key，会提示你去这里创建开发者密钥：
-
-```text
-https://openapi.aihaoji.com
-```
-
-创建完成后，把你的 API Key 粘贴回来就行，格式类似：
-
-```text
-sk-sxxxxxxxx
-```
-
-也可以让 Codex、OpenClaw、Claude Code 或 Hermes Agent 把你提供的 Key 写入共享配置。Key 不会在安装完成摘要中回显；共享配置文件会使用仅当前用户可读的 `0600` 权限。
-
-系统会自动帮你：
-
-1. 校验这把 API Key 是否可用
-2. 绑定到当前本地环境
-3. 继续你刚才的请求
-
-校验通过后，通常会看到类似提示：
-
-```text
-API Key 校验通过，已完成配置。
-当前用户是：xxx
-已绑定密钥：yyy
-
-我继续帮你看最近的笔记。
-```
-
-
-## 怎么用
-
-你可以直接这样说：
+## 适用场景
 
 - `帮我看最近的笔记`
 - `帮我找Ai好记相关的内容`
-- `帮我看“首次公开！Ai好记的后台数据长啥样？”这篇笔记`
-- `帮我看这篇笔记的总结`
-- `帮我看这篇笔记的大纲`
-- `帮我看这篇笔记的精华速览`
-- `帮我看这篇笔记的润色稿`
-- `帮我看这篇笔记的原文`
 - `帮我找这个 URL 对应的笔记：https://www.bilibili.com/video/BV...`
+- `帮我看这篇笔记的总结、原文或大纲`
 - `帮我读取这篇笔记的划线和批注`
 - `新建一个笔记本叫产品研究`
 - `把这几篇笔记移动到产品研究`
 - `帮我把 2026年7月2日 的笔记自动归类整理`
 
-## 常见提示
+## 核心能力
 
-### 1. 提示没有配置 API Key
+| 能力 | 说明 |
+|---|---|
+| 查找笔记 | 查看最近笔记，或按关键词、标题、时间、笔记本和原始 URL 查找已有笔记 |
+| 按链接找笔记 | 使用原始内容 URL 定位对应的 Ai好记笔记 |
+| 阅读详情 | 查看总结、大纲、精华速览、润色稿、原文和完整内容 |
+| 导出 Markdown | 使用详情接口返回的 Markdown 内容导出单篇笔记 |
+| 读取用户记录 | 查看划线、高亮、批注和我的记录，作为阅读和整理依据 |
+| 管理笔记本 | 新建、重命名、删除和移动笔记本，写入前先展示操作计划 |
+| 移动整理笔记 | 把单篇或多篇笔记移动到指定笔记本，并回读验证结果 |
+| 自动归类整理 | 读取笔记和用户记录，生成归类计划，经确认后创建笔记本并移动笔记 |
 
-这是第一次使用时的正常情况。
+## 安装
 
-去这里创建开发者密钥：
-
-```text
-https://openapi.aihaoji.com
-```
-
-然后把 `sk-s...` 粘贴回来即可。
-
-### 2. 提示 API Key 无效
-
-说明你粘贴的内容不是一把可用的 AI 好记 API Key，或者没有复制完整。
-
-建议重新复制完整的 `sk-s...` 再试一次。
-
-### 3. 提示当前用户不是会员用户
-
-说明这把 API Key 对应的账号当前不是会员账号。
-
-需要先开通或续费会员后再使用。
-
-### 4. 提示没有某个内容
-
-例如你说：
-
-```text
-帮我看这篇笔记的精华速览
-```
-
-如果这篇笔记暂时还没有生成精华速览，系统会直接告诉你当前没有这部分内容，并提示你继续看总结、大纲或润色稿。
-
-## 你可以这样理解
-
-安装好以后，这个 skill 就像一个“AI 好记笔记助理”。
-
-你不用记笔记 ID，也不用手动查接口。  
-直接像聊天一样说出你想看什么，它会帮你：
-
-- 找到对应笔记
-- 打开笔记详情
-- 只展示你要看的那一部分内容
-- 读取划线、批注和我的记录
-- 生成整理计划
-- 经你确认后创建笔记本并移动笔记
-
-## 备用方式
-
-如果某些情况下聊天里没有自动完成绑定，npm 包发布后可以使用以下任一方式：
+安装 Skill，让不同 Agent 平台都可以使用：
 
 ```bash
-npx aihaoji-skills setup
+npx skills add AiHaoJi-Agent/aihaoji-skills -g
 ```
 
-或：
+`-g` 表示为当前用户安装。此命令会安装到检测到的兼容 Agent，无需逐个平台重复安装。
 
-```bash
-npm install -g aihaoji-skills
-aihaoji-skills setup
-```
+## 配置 API Key
 
-兼容旧的 `install` 子命令：
+首次使用时，直接告诉 Agent 你想查找或整理哪些笔记。若尚未配置 API Key，Agent 会引导你完成：
 
-```bash
-npx aihaoji-skills install
-```
+1. 前往 [Ai好记开放平台](https://openapi.aihaoji.com) 创建开发者密钥。
+2. 按照当前 Agent 的提示完成授权。
+3. 当前 Agent 会在你授权后完成校验并保存到当前电脑，然后继续处理刚才的请求。
 
-当前仓库已经包含 npm CLI 和 `bin` 声明，但 `aihaoji-skills` 尚未发布到 npm registry；发布前请使用上面的 GitHub 安装命令。
+同一台电脑上的 Codex、OpenClaw、Claude Code 和 Hermes Agent 可以共用一次配置，无需在不同 Agent 中重复配置。请妥善保管 API Key，不要公开分享。
+
+## 许可证
+
+[MIT-0](LICENSE)
