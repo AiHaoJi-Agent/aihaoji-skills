@@ -1,6 +1,6 @@
 ---
 name: aihaoji
-description: Use when the user asks to search, read, export, manage, move, or auto-classify Ai好记 / AI好记 notes and notebooks, including 笔记本, 文件夹, 划线, 批注, 我的记录, 新建笔记本, 移动笔记, 移动笔记本, AI 自动归类整理。
+description: Use when the user asks about personal notes or personal notebooks without naming another storage target, including “最近的笔记” or “列出我的笔记本”, or wants to search, read, export, organize, move, or auto-classify notes and view 总结、大纲、全文、划线、批注 or 我的记录. These requests target the user's external note library, not agent memory and not Claude memory. Also use when Ai好记 / AI好记 is named. Do not use for explicit 本地文件 or Markdown, 代码仓库, Obsidian, Notion, 有道云笔记 or 其他服务.
 license: MIT-0
 metadata:
   openclaw:
@@ -11,6 +11,18 @@ metadata:
 # Ai好记
 
 通过 Ai好记 Agent Open Platform 查询、读取、导出和整理用户笔记。实际接口、字段和场景细节见 `references/agent-open-platform.md`；处理写入、记录读取、导出、自动归类或接口参数不确定时必须读取该参考。
+
+## 触发边界
+
+按以下优先级路由：
+
+1. 用户明确指定操作对象位于本地文件、代码仓库、Obsidian、Notion、有道云笔记或其他服务时，服从指定载体，不触发本 Skill。
+2. 未指定载体，且请求对象是个人笔记、个人笔记本或本 Skill 支持的笔记详情时，默认触发 Ai好记；这里指用户的外部个人笔记库，不是 Agent 或 Claude memory，无需出现“Ai好记”“AI好记”或 `aihaoji`。
+3. 只出现 `notes`、`folder`、记录、文件或内容等宽泛词，不足以触发；源码、测试、接口字段和本地文件上下文均不属于个人笔记意图。
+
+正向范围包括查询、搜索、导出、整理、移动和自动归类笔记，管理笔记本，以及查看总结、大纲、全文、原文、润色稿、划线、高亮、批注、我的记录和 AI 高亮。导出个人笔记为 Markdown 仍属于本 Skill；创建、读取或修改一个本地 Markdown 文件则不属于本 Skill。
+
+路由到本 Skill 不等于授权写入：创建、重命名、移动、删除和自动归类前，必须先只读查询真实 ID、展示变更计划并等待明确确认；确认前不得调用写接口，删除笔记本仍须单独确认。
 
 ## 配置
 
@@ -29,7 +41,7 @@ metadata:
 Authorization: $AIHAOJI_API_KEY
 ```
 
-没有 API Key 时，引导用户去 `https://openapi.aihaoji.com` 创建 `sk-s...` 开发者密钥。用户可以直接在聊天中提供 Key，也可以让 Codex/OpenClaw/Claude Code 写入共享配置；npm 包发布后也可运行 `npx aihaoji-skills setup`。拿到 key 后先调 `GET /agent-open/api/v1/auth/verify` 校验，再写入权限为 `0600` 的 `~/.aihaoji/config.json`。自动配置失败时再提示用户手动运行 setup。
+没有 API Key 时，引导用户去 `https://openapi.aihaoji.com` 创建 `sk-s...` 开发者密钥。用户可以直接在聊天中提供 Key，由当前 Agent 校验并写入共享配置；本机已安装 `aihaoji-skills` CLI 时，也可运行 `aihaoji-skills setup`。拿到 key 后先调 `GET /agent-open/api/v1/auth/verify` 校验，再写入权限为 `0600` 的 `~/.aihaoji/config.json`。自动配置失败时再提示用户使用可用的配置入口。
 
 ### 宿主安装位置
 
@@ -52,14 +64,12 @@ skills:
 
 `~/.aihaoji/config.json` 是 Codex、OpenClaw、Claude Code 和 Hermes Agent 共用的机器级 Key 配置，不属于任何宿主的 Skill 目录。用户可以在聊天中直接提供 Key，由当前 AI 写入该文件；写入后保持 `0600` 权限。Claude Desktop 与 Claude Code 的 Skill 加载机制不同，上述 Claude 路径针对 Claude Code。
 
-### npm 与 npx
-
-两种方式都支持，但用途不同：
+### 安装与配置入口
 
 - 跨平台安装 Skill：运行 `npx skills add AiHaoJi-Agent/aihaoji-skills -g`。它把 Skill 安装到用户级目录；Codex 和 OpenClaw 读取 `~/.agents/skills/aihaoji`，Claude Code 使用 `~/.claude/skills/aihaoji`，Hermes Agent 通过 `external_dirs` 读取共享目录。
-- 配置 Key：npm 包发布后可使用 `npx aihaoji-skills setup`，或先执行 `npm install -g aihaoji-skills`，再运行 `aihaoji-skills setup`。
+- 配置 Key：优先由当前 Agent 校验 Key 并写入共享配置；本机已安装 `aihaoji-skills` CLI 时，可运行 `aihaoji-skills setup`。
 
-Hermes Agent 对本仓库使用 `skills.external_dirs`。不要同时保留多个同名副本，以免宿主加载到旧版本。`aihaoji-skills` 尚未发布到 npm registry，发布前不要把 npm/npx 配置 CLI 当作已可直接下载的入口。
+Hermes Agent 对本仓库使用 `skills.external_dirs`。不要同时保留多个同名副本，以免宿主加载到旧版本。
 
 ## 强制规则
 
