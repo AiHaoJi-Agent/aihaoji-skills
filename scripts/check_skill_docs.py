@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 REQUIRED_STRINGS = {
-    "SKILL.md": [
+    "skills/aihaoji/SKILL.md": [
         "name: aihaoji",
         "POST /agent-open/api/v1/folders",
         "POST /agent-open/api/v1/folders/batch-move",
@@ -16,8 +16,11 @@ REQUIRED_STRINGS = {
         "move_item_list",
         "ai_highlights",
         "records_detail",
+        "folder:list",
     ],
-    "references/agent-open-platform.md": [
+    "skills/aihaoji/references/agent-open-platform.md": [
+        "`note:list`：读取笔记列表",
+        "`folder:list`：读取笔记本树",
         "folder:write",
         "note:move",
         "POST /agent-open/api/v1/notes/batch-move",
@@ -45,16 +48,17 @@ REQUIRED_STRINGS = {
 }
 
 FORBIDDEN_STRINGS = {
-    "SKILL.md": [
+    "skills/aihaoji/SKILL.md": [
         "GET /auth/verify",
     ],
-    "references/agent-open-platform.md": [
+    "skills/aihaoji/references/agent-open-platform.md": [
         "GET /auth/verify",
         "GET /agent-open/api/v1/notes/{note_id}/records",
         "include_my_record",
         '"folder_id": 123\n}',
         "顶层笔记本传空",
         "`parent_id` 可为空，表示创建顶层笔记本",
+        "`note:list`：读取笔记列表和笔记本树",
     ],
 }
 
@@ -100,9 +104,10 @@ def check_forbidden_strings() -> list[str]:
 
 
 def check_skill_size() -> list[str]:
-    skill_lines = Path("SKILL.md").read_text(encoding="utf-8").splitlines()
+    skill_path = Path("skills/aihaoji/SKILL.md")
+    skill_lines = skill_path.read_text(encoding="utf-8").splitlines()
     if len(skill_lines) > 180:
-        return [f"SKILL.md: too long ({len(skill_lines)} lines > 180)"]
+        return [f"{skill_path}: too long ({len(skill_lines)} lines > 180)"]
     return []
 
 

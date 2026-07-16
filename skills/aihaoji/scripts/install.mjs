@@ -4,18 +4,16 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import readline from "node:readline";
+import { fileURLToPath } from "node:url";
 
 const DEFAULT_BASE_URL = process.env.AIHAOJI_BASE_URL || "https://openapi.aihaoji.com";
 const OPENCLAW_CONFIG_PATH = path.join(os.homedir(), ".openclaw", "openclaw.json");
 const SHARED_CONFIG_PATH = path.join(os.homedir(), ".aihaoji", "config.json");
 const CODEX_CONFIG_PATH = path.join(os.homedir(), ".codex", "config.toml");
-const CLAUDE_CONFIG_PATH = path.join(
-  os.homedir(),
-  "Library",
-  "Application Support",
-  "Claude",
-  "claude_desktop_config.json",
-);
+const CODEX_SKILLS_PATH = path.join(os.homedir(), ".agents", "skills");
+const CLAUDE_CODE_SKILLS_PATH = path.join(os.homedir(), ".claude", "skills");
+const HERMES_SKILLS_PATH = path.join(os.homedir(), ".hermes", "skills");
+const HERMES_CONFIG_PATH = path.join(os.homedir(), ".hermes", "config.yaml");
 const KEY_CREATE_URL = "https://openapi.aihaoji.com";
 
 function normalizeBaseUrl(baseUrl) {
@@ -63,12 +61,26 @@ async function promptApiKey() {
 }
 
 
+export function buildAuthorizationHeaders(apiKey) {
+  return { Authorization: apiKey };
+}
+
+export function validateVerifyResponse(result) {
+  const data = result?.data && typeof result.data === "object" ? result.data : {};
+  const valid = result?.code === 0
+    && data.valid === true
+    && data.membership_active === true
+    && data.key_status === "active";
+  if (!valid) {
+    throw new Error(result?.message || "API Key 校验失败。");
+  }
+  return result;
+}
+
 async function checkApiKey(baseUrl, apiKey) {
   const url = `${getAgentOpenApiBaseUrl(baseUrl)}/auth/verify`;
   const response = await fetch(url, {
-    headers: {
-      Authorization: apiKey,
-    },
+    headers: buildAuthorizationHeaders(apiKey),
   });
   if (!response.ok) {
     let errorMessage = `API Key 校验失败：HTTP ${response.status}`;
@@ -85,7 +97,7 @@ async function checkApiKey(baseUrl, apiKey) {
     }
     fail(errorMessage);
   }
-  return response.json();
+  return validateVerifyResponse(await response.json());
 }
 
 function loadJsonConfig(configPath) {
@@ -95,9 +107,13 @@ function loadJsonConfig(configPath) {
   return JSON.parse(fs.readFileSync(configPath, "utf-8"));
 }
 
-function saveJsonConfig(configPath, config) {
-  fs.mkdirSync(path.dirname(configPath), { recursive: true });
-  fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, "utf-8");
+export function saveJsonConfig(configPath, config) {
+  fs.mkdirSync(path.dirname(configPath), { recursive: true, mode: 0o700 });
+  fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, {
+    encoding: "utf-8",
+    mode: 0o600,
+  });
+  fs.chmodSync(configPath, 0o600);
 }
 
 function writeOpenClawSkillConfig(config, apiKey, baseUrl) {
@@ -127,11 +143,30 @@ function writeSharedConfig(apiKey, baseUrl, verifyData) {
   };
 }
 
-function detectHosts() {
+export function summarizeVerifyResult(probe) {
+  const data = probe?.data && typeof probe.data === "object" ? probe.data : {};
+  const allowedFields = ["valid", "membership_active", "key_status", "permissions"];
   return {
-    openclaw: fs.existsSync(path.dirname(OPENCLAW_CONFIG_PATH)) || fs.existsSync(OPENCLAW_CONFIG_PATH),
-    codex: fs.existsSync(path.join(os.homedir(), ".codex")) || fs.existsSync(CODEX_CONFIG_PATH),
-    claude: fs.existsSync(path.dirname(CLAUDE_CONFIG_PATH)) || fs.existsSync(CLAUDE_CONFIG_PATH),
+    code: probe?.code,
+    message: probe?.message,
+    data: Object.fromEntries(
+      allowedFields.filter((key) => key in data).map((key) => [key, data[key]]),
+    ),
+  };
+}
+
+export function detectHosts(homeDir = os.homedir()) {
+  const openclawPath = path.join(homeDir, ".openclaw");
+  const codexPath = path.join(homeDir, ".codex");
+  const codexSkillsPath = path.join(homeDir, ".agents", "skills");
+  const claudeCodeSkillsPath = path.join(homeDir, ".claude", "skills");
+  const hermesSkillsPath = path.join(homeDir, ".hermes", "skills");
+  const hermesConfigPath = path.join(homeDir, ".hermes", "config.yaml");
+  return {
+    openclaw: fs.existsSync(openclawPath),
+    codex: fs.existsSync(codexSkillsPath) || fs.existsSync(codexPath),
+    claude: fs.existsSync(claudeCodeSkillsPath),
+    hermes: fs.existsSync(hermesSkillsPath) || fs.existsSync(hermesConfigPath),
   };
 }
 
@@ -161,20 +196,25 @@ async function install() {
   }
 
   info(`已写入 Ai好记共享配置：${SHARED_CONFIG_PATH}`);
-  info(`安装完成，当前用户是：${verifyData.user_name || verifyData.user_id || "未知用户"}`);
-  info(`已绑定密钥：${verifyData.key_name || verifyData.key_id || "未知密钥"}`);
+  info(`安装完成，当前用户是：${verifyData.user_name || "已验证用户"}`);
+  info(`已绑定密钥：${verifyData.key_name || "已验证密钥"}`);
   info(
     `检测到宿主：OpenClaw=${hosts.openclaw ? "yes" : "no"}, `
-      + `Codex=${hosts.codex ? "yes" : "no"}, Claude=${hosts.claude ? "yes" : "no"}`,
+      + `Codex=${hosts.codex ? "yes" : "no"}, Claude=${hosts.claude ? "yes" : "no"}, `
+      + `Hermes=${hosts.hermes ? "yes" : "no"}`,
   );
   if (hosts.codex) {
-    info(`已检测到 Codex：${CODEX_CONFIG_PATH}`);
+    info(`已检测到 Codex：${CODEX_SKILLS_PATH}（配置：${CODEX_CONFIG_PATH}）`);
   }
   if (hosts.claude) {
-    info(`已检测到 Claude：${CLAUDE_CONFIG_PATH}`);
+    info(`已检测到 Claude Code：${CLAUDE_CODE_SKILLS_PATH}`);
+  }
+  if (hosts.hermes) {
+    const hermesPath = fs.existsSync(HERMES_CONFIG_PATH) ? HERMES_CONFIG_PATH : HERMES_SKILLS_PATH;
+    info(`已检测到 Hermes Agent：${hermesPath}`);
   }
   info("auth/verify 校验结果如下：");
-  console.log(JSON.stringify(result, null, 2));
+  console.log(JSON.stringify(summarizeVerifyResult(result), null, 2));
 }
 
 async function main() {
@@ -184,12 +224,17 @@ async function main() {
     return;
   }
   if (command === "help" || command === "--help" || command === "-h") {
-    console.log("用法：npx aihaoji-openclaw setup");
-    console.log("兼容：npx aihaoji-openclaw install");
-    console.log("可选：npx aihaoji-openclaw setup --api-key=sk-sxxxxxxxx");
+    console.log("用法：npx aihaoji-skills setup");
+    console.log("兼容：npx aihaoji-skills install");
+    console.log("可选：npx aihaoji-skills setup --api-key=sk-sxxxxxxxx");
     return;
   }
   fail(`不支持的命令：${command}`);
 }
 
-main().catch((error) => fail(error instanceof Error ? error.message : String(error)));
+if (
+  process.argv[1]
+  && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url))
+) {
+  main().catch((error) => fail(error instanceof Error ? error.message : String(error)));
+}

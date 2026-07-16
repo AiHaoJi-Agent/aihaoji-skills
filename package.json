@@ -1,14 +1,24 @@
 {
-  "name": "aihaoji-openclaw",
-  "version": "0.1.0",
-  "description": "Ai好记 Skill — 搜索、读取、导出、整理 AI好记笔记，支持笔记本管理、笔记移动、划线批注和我的记录。",
-  "license": "MIT",
+  "name": "aihaoji-skills",
+  "version": "1.0.0",
+  "description": "Ai好记 Skill — 搜索、读取、导出、整理 AI好记笔记，支持笔记本管理、笔记移动、查看划线批注和我的记录。",
+  "license": "MIT-0",
   "author": "aihaoji",
-  "homepage": "https://aihaoji.com",
+  "homepage": "https://aihaoji.com/zh/skill",
   "repository": {
     "type": "git",
     "url": "https://github.com/AiHaoJi-Agent/aihaoji-skills.git"
   },
+  "files": [
+    "README.md",
+    "LICENSE",
+    "skills/aihaoji/SKILL.md",
+    "skills/aihaoji/agents/",
+    "skills/aihaoji/references/",
+    "skills/aihaoji/scripts/check_aihaoji.py",
+    "skills/aihaoji/scripts/install_aihaoji.py",
+    "skills/aihaoji/scripts/install.mjs"
+  ],
   "keywords": [
     "Ai好记",
     "aihaoji",
@@ -19,29 +29,24 @@
     "笔记本管理",
     "笔记整理",
     "批注",
+    "agent-skills",
+    "codex",
     "openclaw",
+    "claude-code",
+    "hermes-agent",
     "skill"
   ],
-  "clawhub": {
-    "acceptLicenseTerms": true
-  },
-  "openclaw": {
-    "minVersion": "0.1.0",
-    "baseUrl": "https://openapi.aihaoji.com",
-    "requires": {},
-    "optionalEnv": [
-      "AIHAOJI_API_KEY"
-    ]
+  "engines": {
+    "node": ">=18"
   },
   "bin": {
-    "aihaoji-openclaw": "./scripts/install.mjs"
+    "aihaoji-skills": "./skills/aihaoji/scripts/install.mjs"
   },
   "scripts": {
-    "setup": "node ./scripts/install.mjs setup",
-    "install": "node ./scripts/install.mjs install",
-    "check": "python3 scripts/check_aihaoji.py",
-    "check:docs": "python3 scripts/check_skill_docs.py",
-    "test": "python3 -m pytest tests",
-    "install:local": "python3 scripts/install_aihaoji.py"
+    "setup": "node ./skills/aihaoji/scripts/install.mjs setup",
+    "check": "python3 skills/aihaoji/scripts/check_aihaoji.py",
+    "test": "python3 -m pytest tests && node --test tests/*.test.mjs",
+    "install:local": "python3 skills/aihaoji/scripts/install_aihaoji.py",
+    "validate:skill": "node scripts/validate_skill.mjs"
   }
 }

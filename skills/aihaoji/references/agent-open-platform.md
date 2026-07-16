@@ -2,6 +2,28 @@
 
 这个 skill 主要依赖开放平台的鉴权、笔记本管理、笔记列表、笔记详情、记录读取和笔记移动能力。
 
+## 目录
+
+- [1. 校验 API Key](#1-校验-api-key)
+- [权限约定](#权限约定)
+- [参数来源约定](#参数来源约定)
+- [2. 查询 Ai好记 笔记本树](#2-查询-ai好记-笔记本树)
+  - [2.1 创建 Ai好记 笔记本](#21-创建-ai好记-笔记本)
+  - [2.2 重命名 Ai好记 笔记本](#22-重命名-ai好记-笔记本)
+  - [2.3 删除 Ai好记 笔记本](#23-删除-ai好记-笔记本)
+  - [2.4 批量移动 Ai好记 笔记本](#24-批量移动-ai好记-笔记本)
+- [3. 搜索 Ai好记内容列表](#3-搜索-ai好记内容列表)
+- [4. 查询 Ai好记详情](#4-查询-ai好记详情)
+  - [4.1 通过详情查询划线、批注、我的记录](#41-通过详情查询划线批注我的记录)
+- [5. 移动单篇笔记到指定笔记本](#5-移动单篇笔记到指定笔记本)
+  - [5.1 批量移动笔记](#51-批量移动笔记)
+- [6. AI 自动归类整理推荐流程](#6-ai-自动归类整理推荐流程)
+- [语义视图与 Markdown 导出](#semantic_view-说明)
+- [推荐调用流程](#推荐调用流程)
+- [配置建议与当前边界](#配置建议)
+- [详情查看规则](#详情查看规则)
+- [鉴权异常处理约定](#鉴权异常处理约定)
+
 ## 1. 校验 API Key
 
 接口：
@@ -38,8 +60,9 @@ Authorization: sk-sxxxxxxxxxxxxxxxx
 
 常用权限：
 
-- `note:list`：读取笔记列表和笔记本树
+- `note:list`：读取笔记列表
 - `note:read`：读取笔记详情、语义视图、划线、批注、我的记录
+- `folder:list`：读取笔记本树
 - `folder:write`：创建、重命名、删除和移动笔记本
 - `note:move`：移动单篇或批量移动笔记
 
@@ -78,7 +101,7 @@ Authorization: sk-sxxxxxxxxxxxxxxxx
 
 权限要求：
 
-- `note:list`
+- `folder:list`
 
 用途：
 
@@ -628,7 +651,7 @@ GET /agent-open/api/v1/notes?page_no=1&page_size=10&keyword=https%3A%2F%2Fwww.bi
 - 用已有 API Key 读你的笔记和用户记录
 - 完成“校验 -> 笔记本 / 搜索 -> 详情 / 记录 / 整理写入”的调用链
 - 在用户确认后创建笔记本、移动笔记、移动笔记本和批量移动笔记
-- 通过共享配置让 OpenClaw、Codex、Claude 共用同一份 Ai好记配置
+- 通过共享配置让 OpenClaw、Codex、Claude Code、Hermes Agent 共用同一份 Ai好记配置
 
 ## 详情查看规则
 
@@ -664,7 +687,7 @@ skill 侧需要明确提示用户以下可能性：
 - API Key 已停用
 - API Key 已删除
 - 当前 API Key 对应用户不是会员用户
-- API Key 缺少 `note:list`、`note:read`、`folder:write` 或 `note:move`
+- API Key 缺少 `note:list`、`note:read`、`folder:list`、`folder:write` 或 `note:move`
 - API Key 对应应用、用户绑定或授权关系失效
 
 不允许只说“请求失败”或“接口异常”。
