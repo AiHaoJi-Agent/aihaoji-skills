@@ -1,7 +1,7 @@
 {
   "name": "aihaoji-skills",
   "version": "1.0.0",
-  "description": "Ai好记 Skill — 搜索、读取、导出、整理 AI好记笔记，支持笔记本管理、笔记移动、查看划线批注和我的记录。",
+  "description": "Ai好记 Skill — 搜索、读取、导出、创建、整理 AI好记笔记，支持 Markdown 写入、笔记本管理、笔记移动、查看划线批注和我的记录。",
   "license": "MIT-0",
   "author": "aihaoji",
   "homepage": "https://aihaoji.com/zh/skill",
