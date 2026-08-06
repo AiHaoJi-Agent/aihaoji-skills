@@ -1,6 +1,6 @@
 ---
 name: aihaoji
-description: Use when the user asks about personal notes or personal notebooks without naming another storage target, including “最近的笔记” or “列出我的笔记本”, or wants to search, read, export, organize, move, or auto-classify notes and view 总结、大纲、全文、划线、批注 or 我的记录. These requests target the user's external note library, not agent memory and not Claude memory. Also use when Ai好记 / AI好记 is named. Do not use for explicit 本地文件 or Markdown, 代码仓库, Obsidian, Notion, 有道云笔记 or 其他服务.
+description: Use when the user asks about personal notes or personal notebooks without naming another storage target, including “最近的笔记” or “列出我的笔记本”, or wants to search, read, export, create, organize, move, or auto-classify notes and view 总结、大纲、全文、划线、批注 or 我的记录. These requests target the user's external note library, not agent memory and not Claude memory. Also use when Ai好记 / AI好记 is named. Do not use for explicit 本地文件 or Markdown, 代码仓库, Obsidian, Notion, 有道云笔记 or 其他服务.
 license: MIT-0
 metadata:
   openclaw:
@@ -20,7 +20,7 @@ metadata:
 2. 未指定载体，且请求对象是个人笔记、个人笔记本或本 Skill 支持的笔记详情时，默认触发 Ai好记；这里指用户的外部个人笔记库，不是 Agent 或 Claude memory，无需出现“Ai好记”“AI好记”或 `aihaoji`。
 3. 只出现 `notes`、`folder`、记录、文件或内容等宽泛词，不足以触发；源码、测试、接口字段和本地文件上下文均不属于个人笔记意图。
 
-正向范围包括查询、搜索、导出、整理、移动和自动归类笔记，管理笔记本，以及查看总结、大纲、全文、原文、润色稿、划线、高亮、批注、我的记录和 AI 高亮。导出个人笔记为 Markdown 仍属于本 Skill；创建、读取或修改一个本地 Markdown 文件则不属于本 Skill。
+正向范围包括查询、搜索、导出、创建空白笔记、整理、移动和自动归类笔记，管理笔记本，以及查看总结、大纲、全文、原文、润色稿、划线、高亮、批注、我的记录和 AI 高亮。导出个人笔记为 Markdown 仍属于本 Skill；创建笔记公开使用 Markdown；创建、读取或修改一个本地 Markdown 文件则不属于本 Skill。
 
 路由到本 Skill 不等于授权写入：创建、重命名、移动、删除和自动归类前，必须先只读查询真实 ID、展示变更计划并等待明确确认；确认前不得调用写接口，删除笔记本仍须单独确认。
 
@@ -103,11 +103,12 @@ Hermes Agent 对本仓库使用 `skills.external_dirs`。不要同时保留多�
 | 新建笔记本 | `POST /agent-open/api/v1/folders` |
 | 重命名笔记本 | `PUT /agent-open/api/v1/folders/{folder_id}` |
 | 删除笔记本 | `DELETE /agent-open/api/v1/folders/{folder_id}` |
+| 创建空白笔记 | `POST /agent-open/api/v1/notes`，请求体使用 `title`、`content_markdown` 和可选 `folder_id` |
 | 移动单篇笔记 | `PATCH /agent-open/api/v1/notes/{note_id}/folder`，请求体使用 `target_folder_id` |
 | 批量移动笔记 | `POST /agent-open/api/v1/notes/batch-move` |
 | 批量移动笔记本 | `POST /agent-open/api/v1/folders/batch-move` |
 
-笔记本树读取需要 `folder:list`；写入权限通常需要 `folder:write` 或 `note:move`；记录读取需要 `note:read`。
+笔记本树读取需要 `folder:list`；创建空白笔记需要 `note:create`；其他写入权限通常需要 `folder:write` 或 `note:move`；记录读取需要 `note:read`。
 
 ## 意图路由
 
@@ -120,6 +121,7 @@ Hermes Agent 对本仓库使用 `skills.external_dirs`。不要同时保留多�
 - 看总结/大纲/精华速览：详情接口传 `semantic_view=summary|outline|highlights`。
 - 看全文/原文/润色稿：先问 `A：导出为 Markdown 文件到本地` / `B：直接在聊天里查看`；用户选 A 时用 `include_export_markdown=true`，选 B 时按 `semantic_chunk_no` 分块查看。
 - 看划线/高亮/批注/我的记录：调详情接口并传 `include_records=true`；重点读取 `data.records_detail.records`、`data.records_detail.my_record`、`data.records_detail.ai_highlights` 和 `data.records_detail.ai_highlights_status`。
+- 创建空白笔记：先询问并确认标题、目标笔记本和 Markdown 正文摘要，再调用 `POST /agent-open/api/v1/notes`；创建成功后用返回的 `note_id` 调详情接口 `semantic_view=full` 回读验证。
 
 ## 整理与写入
 
@@ -131,6 +133,8 @@ Hermes Agent 对本仓库使用 `skills.external_dirs`。不要同时保留多�
 4. 等用户明确确认。
 5. 创建缺失笔记本，再移动笔记或笔记本。
 6. 重新查询目标笔记本或笔记列表验证结果。
+
+创建空白笔记的首版边界：单篇创建，`content_markdown` 必填且最多 100000 个字符；支持标题、粗体、列表、表格、链接、代码等安全 Markdown。不要传开放 HTML，不支持附件、图片上传、@ 引用、编辑、追加、删除或批量创建。
 
 新建顶层笔记本时请求体必须使用 `"parent_id": 0`。后端会把 `0` 归一为根级 `parent_id=None`；不要传 JSON `null`，线上接口可能返回“创建笔记本失败”。
 
@@ -157,7 +161,7 @@ Hermes Agent 对本仓库使用 `skills.external_dirs`。不要同时保留多�
 ## 错误处理
 
 - `401/403`：提示 API Key 可能无效、过期、停用、删除、无权限、非会员或应用绑定失效。
-- 权限不足：指出需要 `note:list`、`note:read`、`folder:list`、`folder:write` 或 `note:move`。
+- 权限不足：指出需要 `note:list`、`note:read`、`note:create`、`folder:list`、`folder:write` 或 `note:move`。
 - `404`：说明笔记或笔记本不存在，重新查询候选让用户确认。
 - `429`：说明触发频率限制，建议稍后再试或减少批量范围。
 
