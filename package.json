@@ -45,6 +45,7 @@
   "scripts": {
     "setup": "node ./skills/aihaoji/scripts/install.mjs setup",
     "check": "python3 skills/aihaoji/scripts/check_aihaoji.py",
+    "check:create": "python3 skills/aihaoji/scripts/check_aihaoji.py --create-probe",
     "test": "python3 -m pytest tests && node --test tests/*.test.mjs",
     "install:local": "python3 skills/aihaoji/scripts/install_aihaoji.py",
     "validate:skill": "node scripts/validate_skill.mjs"
