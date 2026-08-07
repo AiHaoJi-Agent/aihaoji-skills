@@ -2,6 +2,8 @@ import importlib.util
 import json
 from pathlib import Path
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[1]
 SKILL_ROOT = ROOT / "skills" / "aihaoji"
@@ -195,6 +197,47 @@ def test_check_aihaoji_sends_raw_authorization_header(monkeypatch):
     assert captured == {"authorization": "sk-sraw", "timeout": 10}
 
 
+def test_check_aihaoji_posts_json_payload(monkeypatch):
+    check = load_script("check_aihaoji.py")
+    captured = {}
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def read(self):
+            return b'{"code":0}'
+
+    def fake_urlopen(request, timeout):
+        captured["method"] = request.get_method()
+        captured["authorization"] = request.get_header("Authorization")
+        captured["content_type"] = request.get_header("Content-type")
+        captured["payload"] = json.loads(request.data.decode("utf-8"))
+        captured["timeout"] = timeout
+        return FakeResponse()
+
+    monkeypatch.setattr(check, "urlopen", fake_urlopen)
+
+    result = check.http_json(
+        "https://example.com/notes",
+        "sk-sraw",
+        method="POST",
+        payload={"title": "测试", "content_markdown": "## 正文"},
+    )
+
+    assert result == {"code": 0}
+    assert captured == {
+        "method": "POST",
+        "authorization": "sk-sraw",
+        "content_type": "application/json",
+        "payload": {"title": "测试", "content_markdown": "## 正文"},
+        "timeout": 10,
+    }
+
+
 def test_check_aihaoji_uses_shared_config_first(monkeypatch, tmp_path):
     check = load_script("check_aihaoji.py")
     shared_path = tmp_path / "shared.json"
@@ -283,6 +326,134 @@ def test_check_aihaoji_probe_summary_hides_note_data():
     assert summary["data"] == {"total": 1, "page_no": 1, "page_size": 1, "note_count": 1}
 
 
+def test_check_aihaoji_create_probe_round_trips_markdown_and_export(monkeypatch):
+    check = load_script("check_aihaoji.py")
+    requests = []
+    responses = iter(
+        [
+            {
+                "code": 0,
+                "message": "success",
+                "data": {"note_id": "note-created", "title": "private probe title"},
+            },
+            {
+                "code": 0,
+                "message": "success",
+                "data": {
+                    "semantic_view": "full",
+                    "semantic_markdown": "## 全部内容\n\n## 二级标题\n\n### 三级标题\n\n- 列表项",
+                    "export_markdown": "# private probe title\n\n## 二级标题\n\n### 三级标题\n\n- 列表项",
+                },
+            },
+        ]
+    )
+
+    def fake_http_json(url, api_key, *, method="GET", payload=None):
+        requests.append({"url": url, "api_key": api_key, "method": method, "payload": payload})
+        return next(responses)
+
+    monkeypatch.setattr(check, "http_json", fake_http_json)
+
+    summary = check.run_create_probe("sk-test", "https://openapi.aihaoji.com", folder_id=123)
+
+    assert requests == [
+        {
+            "url": "https://openapi.aihaoji.com/agent-open/api/v1/notes",
+            "api_key": "sk-test",
+            "method": "POST",
+            "payload": {
+                "title": check.CREATE_PROBE_TITLE,
+                "content_markdown": check.CREATE_PROBE_MARKDOWN,
+                "folder_id": 123,
+            },
+        },
+        {
+            "url": (
+                "https://openapi.aihaoji.com/agent-open/api/v1/notes/note-created"
+                "?semantic_view=full&include_export_markdown=true"
+            ),
+            "api_key": "sk-test",
+            "method": "GET",
+            "payload": None,
+        },
+    ]
+    assert summary == {
+        "create_ok": True,
+        "full_readback_ok": True,
+        "markdown_hierarchy_ok": True,
+        "export_ok": True,
+    }
+    serialized = json.dumps(summary)
+    assert "note-created" not in serialized
+    assert "private probe title" not in serialized
+
+
+def test_check_aihaoji_create_probe_hides_request_error_details(monkeypatch):
+    check = load_script("check_aihaoji.py")
+
+    def failing_http_json(*_args, **_kwargs):
+        raise ValueError("private response from note-created")
+
+    monkeypatch.setattr(check, "http_json", failing_http_json)
+
+    with pytest.raises(RuntimeError, match="Create probe request failed") as error:
+        check.run_create_probe("sk-test", "https://openapi.aihaoji.com")
+
+    assert "private response" not in str(error.value)
+    assert "note-created" not in str(error.value)
+
+
+def test_check_aihaoji_write_probe_requires_explicit_opt_in(monkeypatch):
+    check = load_script("check_aihaoji.py")
+    monkeypatch.delenv("AIHAOJI_ALLOW_WRITE_PROBE", raising=False)
+    monkeypatch.setattr(check, "load_skill_config", lambda: ("sk-test", "https://example.com"))
+
+    assert check.main(["--create-probe"]) == 1
+
+
+def test_check_aihaoji_write_probe_runs_only_with_explicit_opt_in(monkeypatch, capsys):
+    check = load_script("check_aihaoji.py")
+    monkeypatch.setenv("AIHAOJI_ALLOW_WRITE_PROBE", "1")
+    monkeypatch.setattr(check, "load_skill_config", lambda: ("sk-test", "https://example.com"))
+    monkeypatch.setattr(
+        check,
+        "run_create_probe",
+        lambda api_key, base_url, folder_id=None: {
+            "create_ok": True,
+            "full_readback_ok": True,
+            "markdown_hierarchy_ok": True,
+            "export_ok": True,
+        },
+    )
+
+    assert check.main(["--create-probe", "--folder-id", "123"]) == 0
+    output = capsys.readouterr().out
+    assert "create/full readback probe passed" in output
+    assert "123" not in output
+
+
+def test_check_aihaoji_default_probe_remains_read_only(monkeypatch, capsys):
+    check = load_script("check_aihaoji.py")
+    monkeypatch.setattr(check, "load_skill_config", lambda: ("sk-test", "https://example.com"))
+    monkeypatch.setattr(
+        check,
+        "fetch_notes_probe",
+        lambda api_key, base_url: {
+            "code": 0,
+            "message": "success",
+            "data": {"total": 0, "page_no": 1, "page_size": 1, "notes": []},
+        },
+    )
+
+    def fail_if_created(*_args, **_kwargs):
+        raise AssertionError("default probe must not create a note")
+
+    monkeypatch.setattr(check, "run_create_probe", fail_if_created)
+
+    assert check.main([]) == 0
+    assert "notes endpoint reachable" in capsys.readouterr().out
+
+
 def test_skill_docs_checker_passes():
     check_docs = load_script("check_skill_docs.py")
 
@@ -327,6 +498,14 @@ def test_npm_package_uses_runtime_files_allowlist():
         "skills/aihaoji/scripts/install_aihaoji.py",
         "skills/aihaoji/scripts/install.mjs",
     ]
+
+
+def test_npm_exposes_explicit_write_probe_without_enabling_it_by_default():
+    package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
+
+    create_check = package["scripts"]["check:create"]
+    assert "--create-probe" in create_check
+    assert "AIHAOJI_ALLOW_WRITE_PROBE" not in create_check
 
 
 def test_distributable_skill_uses_a_complete_nested_directory():
