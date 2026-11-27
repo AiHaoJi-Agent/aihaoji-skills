@@ -610,7 +610,7 @@ def test_readme_documents_available_install_and_shared_key_setup():
     assert "安装 Skill，让不同 Agent 平台都可以使用：" in readme
     assert "npx skills add AiHaoJi-Agent/aihaoji-skills -g" in readme
     assert "安装到检测到的兼容 Agent" in readme
-    assert "https://openapi.aihaoji.com" in readme
+    assert "https://aihaoji.com/skill" in readme
     assert "首次使用时" in readme
     assert "创建开发者密钥" in readme
     assert "在你授权后完成校验并保存到当前电脑" in readme
