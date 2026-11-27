@@ -44,7 +44,7 @@
 ---
 
 Ai好记 Skill 让 Codex、OpenClaw、Claude Code、Hermes Agent 等兼容 Agent Skills 的平台连接你的 Ai好记知识库，
-在聊天中查找、阅读、导出和整理笔记，解析链接与文档/音视频并管理笔记本。
+在聊天中查找、阅读、导出和整理笔记，解析支持的网络链接并管理笔记本。
 
 ## 适用场景
 
@@ -53,7 +53,6 @@ Ai好记 Skill 让 Codex、OpenClaw、Claude Code、Hermes Agent 等兼容 Agent
 - `帮我找这个 URL 对应的笔记：https://www.bilibili.com/video/BV...`
 - `帮我看这篇笔记的总结、原文或大纲`
 - `把这个链接解析后保存到默认笔记本：https://...`
-- `把这个 PDF/音视频解析后保存到产品研究笔记本`
 - `帮我读取这篇笔记的划线和批注`
 - `新建一个笔记本叫产品研究`
 - `帮我创建一篇笔记，标题是会议结论，正文是：## 结论 ...`
